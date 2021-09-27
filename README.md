@@ -35,9 +35,9 @@
   * [  3. ISR_8_PWMs_Array_Simple](examples/ISR_8_PWMs_Array_Simple)
 * [Example ISR_8_PWMs_Array_Complex](#Example-ISR_8_PWMs_Array_Complex)
 * [Debug Terminal Output Samples](#debug-terminal-output-samples)
-  * [1. ISR_8_PWMs_Array_Complex on Arduino AVR Leonardo ATMega32U4](#1-ISR_8_PWMs_Array_Complex-on-Arduino-AVR-Leonardo-ATMega32U4)
-  * [2. ISR_8_PWMs_Array on Arduino AVR Mega2560/ADK](#2-isr_8_pwms_array-on-avr-mega2560adk)
-  * [3. ISR_8_PWMs_Array_Simple on Arduino AVR Nano](#3-ISR_8_PWMs_Array_Simple-on-Arduino-AVR-Nano)
+  * [1. ISR_8_PWMs_Array_Complex on megaAVR Nano Every](#1-ISR_8_PWMs_Array_Complex-on-megaAVR-Nano-Every)
+  * [2. ISR_8_PWMs_Array on megaAVR Nano Every](#2-isr_8_pwms_array-on-megaAVR-Nano-Every)
+  * [3. ISR_8_PWMs_Array_Simple on megaAVR Nano Every](#3-ISR_8_PWMs_Array_Simple-on-megaAVR-Nano-Every)
 * [Debug](#debug)
 * [Troubleshooting](#troubleshooting)
 * [Issues](#issues)
@@ -116,7 +116,7 @@ The catch is **your function is now part of an ISR (Interrupt Service Routine), 
 ## Prerequisites
 
  1. [`Arduino IDE 1.8.16+` for Arduino](https://www.arduino.cc/en/Main/Software)
- 2. [`Arduino megaAVR core 1.8.7+`](https://github.com/arduino/ArduinoCore-megaavr) Use Arduino Board Manager to install. [![Latest release](https://img.shields.io/github/release/arduino/ArduinoCore-megaavr.svg)](https://github.com/arduino/ArduinoCore-megaavr/releases/latest/)
+ 2. [`Arduino megaAVR core 1.8.7+`](https://github.com/arduino/ArduinoCore-megaavr/releases) Use Arduino Board Manager to install.
  
  3. To use with certain example
    - [`SimpleTimer library`](https://github.com/jfturcot/SimpleTimer) for [ISR_8_PWMs_Array_Complex example](examples/ISR_8_PWMs_Array_Complex).
