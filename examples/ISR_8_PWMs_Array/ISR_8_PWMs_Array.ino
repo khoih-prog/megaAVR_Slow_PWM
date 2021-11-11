@@ -11,12 +11,6 @@
   The accuracy is nearly perfect compared to software timers. The most important feature is they're ISR-based timers
   Therefore, their executions are not blocked by bad-behaving functions / tasks.
   This important feature is absolutely necessary for mission-critical tasks.
-
-  Version: 1.0.0
-
-  Version Modified By   Date      Comments
-  ------- -----------  ---------- -----------
-  1.0.0   K.Hoang      27/09/2021 Initial coding for megaAVR-based boards (UNO WiFi Rev2, NANO_EVERY, etc. )
 *****************************************************************************************************************************/
 
 #if ( defined(__AVR_ATmega4809__) || defined(ARDUINO_AVR_UNO_WIFI_REV2) || defined(ARDUINO_AVR_NANO_EVERY) )
@@ -102,11 +96,10 @@ uint32_t PWM_Pin[] =
 
 #define NUMBER_ISR_PWMS         ( sizeof(PWM_Pin) / sizeof(uint32_t) )
 
-
 // You can assign any interval for any timer here, in Hz
-uint32_t PWM_Freq[NUMBER_ISR_PWMS] =
+double PWM_Freq[NUMBER_ISR_PWMS] =
 {
-  1,  2,  3,  4,  5,  6,  7,  8
+  1.0f,  2.0f,  3.0f,  4.0f,  5.0f,  6.0f,  7.0f,  8.0f,
 };
 
 // You can assign any interval for any timer here, in Microseconds

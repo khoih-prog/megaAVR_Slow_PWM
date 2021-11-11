@@ -30,14 +30,18 @@
   * [1. Init Hardware Timer](#1-init-hardware-timer)
   * [2. Set PWM Frequency, dutycycle, attach irqCallbackStartFunc and irqCallbackStopFunc functions](#2-Set-PWM-Frequency-dutycycle-attach-irqCallbackStartFunc-and-irqCallbackStopFunc-functions)
 * [Examples](#examples)
-  * [  1. ISR_8_PWMs_Array](examples/ISR_8_PWMs_Array)
-  * [  2. ISR_8_PWMs_Array_Complex](examples/ISR_8_PWMs_Array_Complex)
-  * [  3. ISR_8_PWMs_Array_Simple](examples/ISR_8_PWMs_Array_Simple)
+  * [ 1. ISR_8_PWMs_Array](examples/ISR_8_PWMs_Array)
+  * [ 2. ISR_8_PWMs_Array_Complex](examples/ISR_8_PWMs_Array_Complex)
+  * [ 3. ISR_8_PWMs_Array_Simple](examples/ISR_8_PWMs_Array_Simple)
+  * [ 4. ISR_Changing_PWM](examples/ISR_Changing_PWM)
+  * [ 5. ISR_Modify_PWM](examples/ISR_Modify_PWM)
 * [Example ISR_8_PWMs_Array_Complex](#Example-ISR_8_PWMs_Array_Complex)
 * [Debug Terminal Output Samples](#debug-terminal-output-samples)
   * [1. ISR_8_PWMs_Array_Complex on megaAVR Nano Every](#1-ISR_8_PWMs_Array_Complex-on-megaAVR-Nano-Every)
   * [2. ISR_8_PWMs_Array on megaAVR Nano Every](#2-isr_8_pwms_array-on-megaAVR-Nano-Every)
   * [3. ISR_8_PWMs_Array_Simple on megaAVR Nano Every](#3-ISR_8_PWMs_Array_Simple-on-megaAVR-Nano-Every)
+  * [4. ISR_Modify_PWM on megaAVR Nano Every](#4-ISR_Modify_PWM-on-megaAVR-Nano-Every)
+  * [5. ISR_Changing_PWM on megaAVR Nano Every](#5-ISR_Changing_PWM-on-megaAVR-Nano-Every)
 * [Debug](#debug)
 * [Troubleshooting](#troubleshooting)
 * [Issues](#issues)
@@ -55,7 +59,7 @@
 
 ### Features
 
-This library enables you to use ISR-based PWM channels on ATmega4809-based boards, such as UNO WiFi Rev2, AVR_Nano_Every, etc., using [`Arduino megaAVR core`](https://github.com/arduino/ArduinoCore-megaavr) to create and output PWM any GPIO pin. Because this library doesn't use the powerful purely hardware-controlled PWM with many limitations, the maximum PWM frequency is currently limited at **500Hz**, which is still suitable for many real-life applications.
+This library enables you to use ISR-based PWM channels on ATmega4809-based boards, such as UNO WiFi Rev2, AVR_Nano_Every, etc., using [`Arduino megaAVR core`](https://github.com/arduino/ArduinoCore-megaavr) to create and output PWM any GPIO pin. Because this library doesn't use the powerful purely hardware-controlled PWM with many limitations, the maximum PWM frequency is currently limited at **500Hz**, which is still suitable for many real-life applications. Now you can change the PWM settings on-the-fly
 
 ---
 
@@ -245,7 +249,9 @@ void setup()
 
  1. [ISR_8_PWMs_Array](examples/ISR_8_PWMs_Array)
  2. [ISR_8_PWMs_Array_Complex](examples/ISR_8_PWMs_Array_Complex)
- 3. [ISR_8_PWMs_Array_Simple](examples/ISR_8_PWMs_Array_Simple) 
+ 3. [ISR_8_PWMs_Array_Simple](examples/ISR_8_PWMs_Array_Simple)
+ 4. [ISR_Changing_PWM](examples/ISR_Changing_PWM)
+ 5. [ISR_Modify_PWM](examples/ISR_Modify_PWM)
 
  
 ---
@@ -386,11 +392,10 @@ uint32_t PWM_Period[NUMBER_ISR_PWMS] =
   1000L,   500L,   333L,   250L,   200L,   166L,   142L,   125L
 };
 
-
 // You can assign any interval for any timer here, in Hz
-uint32_t PWM_Freq[NUMBER_ISR_PWMS] =
+double PWM_Freq[NUMBER_ISR_PWMS] =
 {
-  1,  2,  3,  4,  5,  6,  7,  8
+  1.0f,  2.0f,  3.0f,  4.0f,  5.0f,  6.0f,  7.0f,  8.0f,
 };
 
 // You can assign any interval for any timer here, in Microseconds
@@ -767,7 +772,7 @@ The following is the sample terminal output when running example [ISR_8_PWMs_Arr
 
 ```
 Starting ISR_8_PWMs_Array_Complex on megaAVR Nano Every
-megaAVR_SLOW_PWM v1.0.0
+megaAVR_SLOW_PWM v1.1.0
 CPU Frequency = 16 MHz
 TCB Clock Frequency = 16MHz for highest accuracy
 [PWM] TCB 1
@@ -832,7 +837,7 @@ The following is the sample terminal output when running example [**ISR_8_PWMs_A
 
 ```
 Starting ISR_8_PWMs_Array on megaAVR Nano Every
-megaAVR_SLOW_PWM v1.0.0
+megaAVR_SLOW_PWM v1.1.0
 CPU Frequency = 16 MHz
 TCB Clock Frequency = 16MHz for highest accuracy
 [PWM] TCB 1
@@ -871,7 +876,7 @@ The following is the sample terminal output when running example [**ISR_8_PWMs_A
 ```
 
 Starting ISR_8_PWMs_Array_Simple on megaAVR Nano Every
-megaAVR_SLOW_PWM v1.0.0
+megaAVR_SLOW_PWM v1.1.0
 CPU Frequency = 16 MHz
 TCB Clock Frequency = 16MHz for highest accuracy
 [PWM] TCB 1
@@ -899,6 +904,79 @@ Channel : 4	Period : 200000		OnTime : 60000	Start_Time : 2012956
 Channel : 5	Period : 166666		OnTime : 58333	Start_Time : 2012956
 Channel : 6	Period : 142857		OnTime : 57142	Start_Time : 2012956
 Channel : 7	Period : 125000		OnTime : 56250	Start_Time : 2012956
+```
+
+---
+
+### 4. ISR_Modify_PWM on megaAVR Nano Every
+
+The following is the sample terminal output when running example [ISR_Modify_PWM](examples/ISR_Modify_PWM) on **megaAVR Nano Every** to demonstrate how to modify PWM settings on-the-fly without deleting the PWM channel
+
+```
+Starting ISR_Modify_PWM on megaAVR Nano Every
+megaAVR_SLOW_PWM v1.1.0
+CPU Frequency = 16 MHz
+TCB Clock Frequency = 16MHz for highest accuracy
+[PWM] TCB 1
+[PWM] ==================
+[PWM] Init, Timer = 1
+[PWM] CTRLB   = 0
+[PWM] CCMP    = 65535
+[PWM] INTCTRL = 0
+[PWM] CTRLA   = 1
+[PWM] ==================
+[PWM] Frequency = 30000.00 , CLK_TCB_FREQ = 16000000
+[PWM] setFrequency: _CCMPValueRemaining =  533
+[PWM] ==================
+[PWM] set_CCMP, Timer = 1
+[PWM] CTRLB   = 0
+[PWM] CCMP    = 533
+[PWM] INTCTRL = 1
+[PWM] CTRLA   = 1
+Starting  ITimer1 OK, micros() = 2012212
+Using PWM Freq = 1.00, PWM DutyCycle = 10
+Channel : 0	Period : 1000000		OnTime : 100000	Start_Time : 2017184
+Channel : 0	Period : 500000		OnTime : 450000	Start_Time : 12024008
+Channel : 0	Period : 1000000		OnTime : 100000	Start_Time : 22024396
+Channel : 0	Period : 500000		OnTime : 450000	Start_Time : 32025840
+```
+
+---
+
+### 5. ISR_Changing_PWM on megaAVR Nano Every
+
+The following is the sample terminal output when running example [ISR_Changing_PWM](examples/ISR_Changing_PWM) on **megaAVR Nano Every** to demonstrate how to modify PWM settings on-the-fly by deleting the PWM channel and reinit the PWM channel
+
+```
+Starting ISR_Changing_PWM on megaAVR Nano Every
+megaAVR_SLOW_PWM v1.1.0
+CPU Frequency = 16 MHz
+TCB Clock Frequency = 16MHz for highest accuracy
+[PWM] TCB 1
+[PWM] ==================
+[PWM] Init, Timer = 1
+[PWM] CTRLB   = 0
+[PWM] CCMP    = 65535
+[PWM] INTCTRL = 0
+[PWM] CTRLA   = 1
+[PWM] ==================
+[PWM] Frequency = 30000.00 , CLK_TCB_FREQ = 16000000
+[PWM] setFrequency: _CCMPValueRemaining =  533
+[PWM] ==================
+[PWM] set_CCMP, Timer = 1
+[PWM] CTRLB   = 0
+[PWM] CCMP    = 533
+[PWM] INTCTRL = 1
+[PWM] CTRLA   = 1
+Starting  ITimer1 OK, micros() = 2012392
+Using PWM Freq = 1.00, PWM DutyCycle = 50
+Channel : 0	Period : 1000000		OnTime : 500000	Start_Time : 2017384
+Using PWM Freq = 2.00, PWM DutyCycle = 90
+Channel : 0	Period : 500000		OnTime : 450000	Start_Time : 12024552
+Using PWM Freq = 1.00, PWM DutyCycle = 50
+Channel : 0	Period : 1000000		OnTime : 500000	Start_Time : 22029376
+Using PWM Freq = 2.00, PWM DutyCycle = 90
+Channel : 0	Period : 500000		OnTime : 450000	Start_Time : 32034340
 ```
 
 
@@ -945,6 +1023,7 @@ Submit issues to: [megaAVR_Slow_PWM issues](https://github.com/khoih-prog/megaAV
 
 1. Basic hardware multi-channel PWM for **Arduino megaAVR boards, such as UNO WiFi Rev2, AVR_Nano_Every, etc.** using [`Arduino megaAVR core`](https://github.com/arduino/ArduinoCore-megaavr)
 2. Add Table of Contents
+3. Add functions to modify PWM settings on-the-fly
 
 ---
 ---
