@@ -1,5 +1,5 @@
 /****************************************************************************************************************************
-  megaAVR_Slow_PWM.hpp
+  megaAVR_SLOW_PWM.hpp
   For Arduino megaAVR ATMEGA4809-based boards (UNO WiFi Rev2, NANO_EVERY, etc. )
   Written by Khoi Hoang
 
@@ -12,255 +12,318 @@
   Therefore, their executions are not blocked by bad-behaving functions / tasks.
   This important feature is absolutely necessary for mission-critical tasks.
 
-  Version: 1.1.0
+  Version: 1.2.0
 
   Version Modified By   Date      Comments
   ------- -----------  ---------- -----------
   1.0.0   K.Hoang      27/09/2021 Initial coding for megaAVR-based boards (UNO WiFi Rev2, NANO_EVERY, etc.)
   1.1.0   K Hoang      10/11/2021 Add functions to modify PWM settings on-the-fly
-****************************************************************************************************************************/
+  1.2.0   K Hoang      02/02/2022 Fix multiple-definitions linker error. Improve accuracy. Optimize code. Add MegaCoreX
+*****************************************************************************************************************************/
 
 #pragma once
 
 #ifndef MEGA_AVR_SLOW_PWM_HPP
 #define MEGA_AVR_SLOW_PWM_HPP
 
-#ifndef _PWM_LOGLEVEL_
-  #define _PWM_LOGLEVEL_      0
+#if defined(BOARD_NAME)
+  #undef BOARD_NAME
 #endif
 
-#include <string.h>
-
-/*****************************************************************************************
-
-// From ~/.arduino15/packages/arduino/7.3.0-atmel3.6.1-arduino5/avr/include/avr/iom4809.h
-
-//#define TCB0                  (*(TCB_t *) 0x0A80) // 16-bit Timer Type B
-//#define TCB1                  (*(TCB_t *) 0x0A90) // 16-bit Timer Type B
-//#define TCB2                  (*(TCB_t *) 0x0AA0) // 16-bit Timer Type B
-//#define TCB3                  (*(TCB_t *) 0x0AB0) // 16-bit Timer Type B
-
-//
-typedef enum TCB_CLKSEL_enum
-{
-    TCB_CLKSEL_CLKDIV1_gc = (0x00<<1),  // CLK_PER (No Prescaling)
-    TCB_CLKSEL_CLKDIV2_gc = (0x01<<1),  // CLK_PER/2 (From Prescaler)
-    TCB_CLKSEL_CLKTCA_gc = (0x02<<1),   // Use Clock from TCA
-} TCB_CLKSEL_t;
-
-//
-typedef enum TCB_CNTMODE_enum
-{
-    TCB_CNTMODE_INT_gc = (0x00<<0),       // Periodic Interrupt
-    TCB_CNTMODE_TIMEOUT_gc = (0x01<<0),   // Periodic Timeout
-    TCB_CNTMODE_CAPT_gc = (0x02<<0),      // Input Capture Event
-    TCB_CNTMODE_FRQ_gc = (0x03<<0),       // Input Capture Frequency measurement
-    TCB_CNTMODE_PW_gc = (0x04<<0),        // Input Capture Pulse-Width measurement
-    TCB_CNTMODE_FRQPW_gc = (0x05<<0),     // Input Capture Frequency and Pulse-Width measurement
-    TCB_CNTMODE_SINGLE_gc = (0x06<<0),    // Single Shot
-    TCB_CNTMODE_PWM8_gc = (0x07<<0),      // 8-bit PWM
-} TCB_CNTMODE_t;
-
-*****************************************************************************************/
-
-
-TCB_t* TimerTCB[ NUM_HW_TIMERS ] = { &TCB0, &TCB1, &TCB2, &TCB3 };
-
-#define CLK_TCA_FREQ      (250000L)
-
-// Clock for UNO WiFi Rev2 and Nano Every is 16MHz
-#if USING_16MHZ  
-  // Use no prescaler (prescaler 1) => 16MHz
-  #warning Using no prescaler => 16MHz
-  #define TCB_CLKSEL_VALUE      TCB_CLKSEL_CLKDIV1_gc
-  #define CLOCK_PRESCALER       1
-#elif USING_8MHZ
-  // Use prescaler 2 => 8MHz
-  #warning Using prescaler 2 => 8MHz
-  #define TCB_CLKSEL_VALUE      TCB_CLKSEL_CLKDIV2_gc
-  #define CLOCK_PRESCALER       2
-#elif USING_250KHZ
-  // Optional, but for clarity
-  // Use Timer A as clock (prescaler 64) => 250KHz
-  #warning Using prescaler 64 => 250KHz
-  #define TCB_CLKSEL_VALUE      TCB_CLKSEL_CLKTCA_gc 
-  #define CLOCK_PRESCALER       64
+#if ( defined(__AVR_ATmega4809__) || defined(ARDUINO_AVR_UNO_WIFI_REV2) || defined(ARDUINO_AVR_NANO_EVERY) || \
+      defined(ARDUINO_AVR_ATmega4809) || defined(ARDUINO_AVR_ATmega4808) || defined(ARDUINO_AVR_ATmega3209) || \
+      defined(ARDUINO_AVR_ATmega3208) || defined(ARDUINO_AVR_ATmega1609) || defined(ARDUINO_AVR_ATmega1608) || \
+      defined(ARDUINO_AVR_ATmega809) || defined(ARDUINO_AVR_ATmega808) )
+  #if !defined(BOARD_NAME)
+    #if defined(ARDUINO_AVR_UNO_WIFI_REV2)
+      #define BOARD_NAME      "megaAVR UNO WiFi Rev2"
+    #elif defined(ARDUINO_AVR_NANO_EVERY)
+      #define BOARD_NAME      "megaAVR Nano Every"
+    #elif ( defined(ARDUINO_AVR_ATmega4809) && defined(UNO_WIFI_REV2_PINOUT) )
+      #define BOARD_NAME      "MegaCoreX UNO WiFi Rev2"  
+    #elif ( defined(ARDUINO_AVR_ATmega4809) && defined(NANO_EVERY_PINOUT) )
+      #define BOARD_NAME      "MegaCoreX Nano Every" 
+    #elif defined(ARDUINO_AVR_ATmega4809)
+      #define BOARD_NAME      "MegaCoreX ATmega4809"
+    #elif defined(ARDUINO_AVR_ATmega4808)
+      #define BOARD_NAME      "MegaCoreX ATmega4808"
+    #elif defined(ARDUINO_AVR_ATmega3209)
+      #define BOARD_NAME      "MegaCoreX ATmega3209"
+    #elif defined(ARDUINO_AVR_ATmega3208)
+      #define BOARD_NAME      "MegaCoreX ATmega3208"
+    #elif defined(ARDUINO_AVR_ATmega1609)
+      #define BOARD_NAME      "MegaCoreX ATmega1609"
+    #elif defined(ARDUINO_AVR_ATmega1608)
+      #define BOARD_NAME      "MegaCoreX ATmega1608"
+    #elif defined(ARDUINO_AVR_ATmega809)
+      #define BOARD_NAME      "MegaCoreX ATmega809"
+    #elif defined(ARDUINO_AVR_ATmega808)
+      #define BOARD_NAME      "MegaCoreX ATmega808"   
+    #else
+      #define BOARD_NAME      "megaAVR Unknown"
+    #endif
+  #endif
 #else
-  // Use Timer A as clock (prescaler 64) => 250KHz
-  #warning Using prescaler 64 => 250KHz
-  #define TCB_CLKSEL_VALUE      TCB_CLKSEL_CLKTCA_gc
-  #define CLOCK_PRESCALER       64
+  #error This is designed only for Arduino or MegaCoreX megaAVR board! Please check your Tools->Board setting
 #endif
 
-#define CLK_TCB_FREQ          ( F_CPU / CLOCK_PRESCALER )
-
-void TimerInterrupt::init(int8_t timer)
-{    
-  // Set timer specific stuff
-  // All timers in CTC mode
-  // 8 bit timers will require changing prescalar values,
-  // whereas 16 bit timers are set to either ck/1 or ck/64 prescalar
+#ifndef MEGA_AVR_SLOW_PWM_VERSION
+  #define MEGA_AVR_SLOW_PWM_VERSION           F("megaAVR_SLOW_PWM v1.2.0")
   
-  noInterrupts();
-   
-  // 16 bit timer
-  TimerTCB[timer]->CTRLB    = TCB_CNTMODE_INT_gc;                         // Use timer compare mode
-  TimerTCB[timer]->CCMP     = MAX_COUNT_16BIT;                            // Value to compare with.
-  TimerTCB[timer]->INTCTRL  &= ~TCB_CAPT_bm;                              // Disable the interrupt
-  TimerTCB[timer]->CTRLA    = TCB_CLKSEL_VALUE | TCB_ENABLE_bm;       // Use Timer A as clock, enable timer
+  #define MEGA_AVR_SLOW_PWM_VERSION_MAJOR     1
+  #define MEGA_AVR_SLOW_PWM_VERSION_MINOR     2
+  #define MEGA_AVR_SLOW_PWM_VERSION_PATCH     0
 
-  PWM_LOGWARN1(F("TCB"), timer);
-  
-  PWM_LOGINFO(F("=================="));
-  PWM_LOGINFO1(F("Init, Timer ="), timer);
-  PWM_LOGINFO1(F("CTRLB   ="), TimerTCB[timer]->CTRLB);
-  PWM_LOGINFO1(F("CCMP    ="), TimerTCB[timer]->CCMP);
-  PWM_LOGINFO1(F("INTCTRL ="), TimerTCB[timer]->INTCTRL);
-  PWM_LOGINFO1(F("CTRLA   ="), TimerTCB[timer]->CTRLA);
-  PWM_LOGINFO(F("=================="));
-   
-  _timer = timer;
+  #define MEGA_AVR_SLOW_PWM_VERSION_INT       1002000
+#endif
 
-  interrupts();
-  
-}
+#ifndef _PWM_LOGLEVEL_
+  #define _PWM_LOGLEVEL_        1
+#endif
 
-void TimerInterrupt::set_CCMP()
+#include <avr/interrupt.h>
+#include <avr/pgmspace.h>
+#include "Arduino.h"
+#include "pins_arduino.h"
+
+#include "PWM_Generic_Debug.h"
+
+#define MAX_COUNT_16BIT           65535UL
+
+typedef void (*timer_callback)();
+typedef void (*timer_callback_p)(void *);
+
+// Count only TCB0-TCB3
+enum
 {
-  // Run with noInterrupt()
-  // Set the CCMP for the given timer,
-  // set the toggle count,
-  // then turn on the interrupts
-  uint32_t _CCMPValueToUse;
-  
-  _CCMPValueToUse = min(MAX_COUNT_16BIT, _CCMPValueRemaining);
-  _CCMPValueRemaining -= _CCMPValueToUse;
-   
-  TimerTCB[_timer]->CCMP     = _CCMPValueToUse;    // Value to compare with.
-  
-  TimerTCB[_timer]->INTCTRL = TCB_CAPT_bm; // Enable the interrupt
-  
-  PWM_LOGINFO(F("=================="));
-  PWM_LOGINFO1(F("set_CCMP, Timer ="), _timer);
-  PWM_LOGINFO1(F("CTRLB   ="), TimerTCB[_timer]->CTRLB);
-  PWM_LOGINFO1(F("CCMP    ="), TimerTCB[_timer]->CCMP);
-  PWM_LOGINFO1(F("INTCTRL ="), TimerTCB[_timer]->INTCTRL);
-  PWM_LOGINFO1(F("CTRLA   ="), TimerTCB[_timer]->CTRLA);
-  PWM_LOGDEBUG(F("=================="));
+  HW_TIMER_0 = 0,
+  HW_TIMER_1,
+  HW_TIMER_2,
+  HW_TIMER_3,
+  NUM_HW_TIMERS
+};
 
-  // Flag _CCMPValue == 0 => end of long timer
-  if (_CCMPValueRemaining == 0)
-    _timerDone = true;
 
-}
+class TimerInterrupt
+{
+  private:
 
-// frequency (in hertz) and duration (in milliseconds).
-// Return true if frequency is OK with selected timer (CCMPValue is in range)
-bool TimerInterrupt::setFrequency(float frequency, timer_callback_p callback, uint32_t params, unsigned long duration)
-{ 
-  //frequencyLimit must > 1
-  float frequencyLimit = frequency * 17179.840;
+    bool            _timerDone;
+    int8_t          _timer;
+    unsigned int    _prescalerIndex;
+    uint32_t        _CCMPValue;
+    uint32_t        _CCMPValueRemaining;
+    volatile long   _toggle_count;
+    double           _frequency;
 
-  // Limit frequency to larger than (0.00372529 / 64) Hz or interval 17179.840s / 17179840 ms to avoid uint32_t overflow
-  if ((_timer <= 0) || (callback == NULL) || ((frequencyLimit) < 1) )
-  {
-    PWM_LOGDEBUG(F("setFrequency error"));
-    
-    return false;
-  }
-  else      
-  {       
-    // Calculate the toggle count. Duration must be at least longer then one cycle
-    if (duration > 0)
-    {   
-      _toggle_count = frequency * duration / 1000;
+    void*           _callback;        // pointer to the callback function
+    void*           _params;          // function parameter
 
-      PWM_LOGINFO1(F("setFrequency => _toggle_count ="), _toggle_count);
-      PWM_LOGINFO3(F("Frequency ="), frequency, F(", duration ="), duration);
-           
-      if (_toggle_count < 1)
+    void set_CCMP();
+
+  public:
+
+    TimerInterrupt()
+    {
+      _timer              = -1;
+      _frequency          = 0;
+      _callback           = NULL;
+      _params             = NULL;
+      _timerDone          = false;
+      _CCMPValue           = 0;
+      _CCMPValueRemaining  = 0;
+      _toggle_count       = -1;
+    };
+
+    explicit TimerInterrupt(const uint8_t& timerNo)
+    {
+      _timer              = timerNo;
+      _frequency          = 0;
+      _callback           = NULL;
+      _params             = NULL;
+      _timerDone          = false;
+      _CCMPValue           = 0;
+      _CCMPValueRemaining  = 0;
+      _toggle_count       = -1;
+    };
+
+    void callback() __attribute__((always_inline))
+    {
+      if (_callback != NULL)
       {
-        PWM_LOGDEBUG(F("setFrequency: _toggle_count < 1 error"));
-        
-        return false;
+        if (_params != NULL)
+          (*(timer_callback_p)_callback)(_params);
+        else
+          (*(timer_callback)_callback)();
       }
     }
-    else
+
+    void init(const int8_t& timer);
+
+    void init()
     {
-      _toggle_count = -1;
+      init(_timer);
+    };
+
+    // frequency (in hertz) and duration (in milliseconds). Duration = 0 or not specified => run indefinitely
+    bool setFrequency(const float& frequency, timer_callback_p callback, const uint32_t& params, const unsigned long& duration = 0);
+
+    // frequency (in hertz) and duration (in milliseconds). Duration = 0 or not specified => run indefinitely
+    bool setFrequency(const float& frequency, timer_callback callback, const unsigned long& duration = 0)
+    {
+      return setFrequency(frequency, reinterpret_cast<timer_callback_p>(callback), /*NULL*/ 0, duration);
     }
+
+    // interval (in ms) and duration (in milliseconds). Duration = 0 or not specified => run indefinitely
+    template<typename TArg>
+    bool setInterval(const unsigned long& interval, void (*callback)(TArg), const TArg& params, const unsigned long& duration = 0)
+    {
+      static_assert(sizeof(TArg) <= sizeof(uint32_t), "setInterval() callback argument size must be <= 4 bytes");
+      return setFrequency((float) (1000.0f / interval), reinterpret_cast<timer_callback_p>(callback), (uint32_t) params, duration);
+    }
+
+    // interval (in ms) and duration (in milliseconds). Duration = 0 or not specified => run indefinitely
+    bool setInterval(const unsigned long& interval, timer_callback callback, const unsigned long& duration = 0)
+    {
+      return setFrequency((float) (1000.0f / interval), reinterpret_cast<timer_callback_p>(callback), /*NULL*/ 0, duration);
+    }
+
+    template<typename TArg>
+    bool attachInterrupt(const float& frequency, void (*callback)(TArg), const TArg& params, const unsigned long& duration = 0)
+    {
+      static_assert(sizeof(TArg) <= sizeof(uint32_t), "attachInterrupt() callback argument size must be <= 4 bytes");
+      return setFrequency(frequency, reinterpret_cast<timer_callback_p>(callback), (uint32_t) params, duration);
+    }
+
+    bool attachInterrupt(const float& frequency, timer_callback callback, const unsigned long& duration = 0)
+    {
+      return setFrequency(frequency, reinterpret_cast<timer_callback_p>(callback), /*NULL*/ 0, duration);
+    }
+
+    // Interval (in ms) and duration (in milliseconds). Duration = 0 or not specified => run indefinitely
+    template<typename TArg>
+    bool attachInterruptInterval(const unsigned long& interval, void (*callback)(TArg), const TArg& params, const unsigned long& duration = 0)
+    {
+      static_assert(sizeof(TArg) <= sizeof(uint32_t), "attachInterruptInterval() callback argument size must be <= 4 bytes");
+      return setFrequency( (float) ( 1000.0f / interval), reinterpret_cast<timer_callback_p>(callback), (uint32_t) params, duration);
+    }
+
+    // Interval (in ms) and duration (in milliseconds). Duration = 0 or not specified => run indefinitely
+    bool attachInterruptInterval(const unsigned long& interval, timer_callback callback, const unsigned long& duration = 0)
+    {
+      return setFrequency( (float) ( 1000.0f / interval), reinterpret_cast<timer_callback_p> (callback), /*NULL*/ 0, duration);
+    }
+
+    void detachInterrupt();
+
+    void disableTimer()
+    {
+      detachInterrupt();
+    }
+
+    // Duration (in milliseconds). Duration = 0 or not specified => run indefinitely
+    void reattachInterrupt(const unsigned long& duration = 0);
+
+    // Duration (in milliseconds). Duration = 0 or not specified => run indefinitely
+    void enableTimer(const unsigned long& duration = 0) __attribute__((always_inline))
+    {
+      reattachInterrupt(duration);
+    }
+
+    // Just stop clock source, still keep the count
+    void pauseTimer();
+
+    // Just reconnect clock source, continue from the current count
+    void resumeTimer();
+
+    // Just stop clock source, clear the count
+    void stopTimer()
+    {
+      detachInterrupt();
+    }
+
+    // Just reconnect clock source, start current count from 0
+    void restartTimer(const unsigned long& duration = 0)
+    {
+      reattachInterrupt(duration);
+    }
+
+    int8_t getTimer() __attribute__((always_inline))
+    {
+      return _timer;
+    };
+
+    long getCount() __attribute__((always_inline))
+    {
+      return _toggle_count;
+    };
+
+    void setCount(const long& countInput) __attribute__((always_inline))
+    {
+      //noInterrupts();
+
+      _toggle_count = countInput;
+
+      //interrupts();
+    };
+
+    uint32_t /*long*/ get_CCMPValue() __attribute__((always_inline))
+    {
+      return _CCMPValue;
+    };
+
+    uint32_t /*long*/ get_CCMPValueRemaining() __attribute__((always_inline))
+    {
+      return _CCMPValueRemaining;
+    };
+
+    void adjust_CCMPValue() //__attribute__((always_inline))
+    {
+      noInterrupts();
       
-    //Timer0-3 are 16 bit timers, meaning it can store a maximum counter value of 65535.
+      if (_CCMPValueRemaining < MAX_COUNT_16BIT)
+      {
+        set_CCMP();
+      }
+        
+      interrupts();  
 
-    noInterrupts();
+      _CCMPValueRemaining -= min(MAX_COUNT_16BIT, _CCMPValueRemaining);
 
-    _frequency = frequency;
-    _callback  = (void*) callback;
-    _params    = reinterpret_cast<void*>(params);
+      if (_CCMPValueRemaining <= 0)
+      {
+        // Reset value for next cycle
+        _CCMPValueRemaining = _CCMPValue;
+      
+        PWM_LOGDEBUG1(F("adjust_CCMPValue: reset _CCMPValueRemaining = "), _CCMPValue);
+        _timerDone = true;
+      }
+      else
+        _timerDone = false;
+    };
 
-    _timerDone = false;
-    
-    _CCMPValue = _CCMPValueRemaining = (uint32_t) (CLK_TCB_FREQ / frequency);
+    void reload_CCMPValue() //__attribute__((always_inline))
+    {
+      noInterrupts();
 
-    PWM_LOGINFO3(F("Frequency ="), frequency, F(", CLK_TCB_FREQ ="), CLK_TCB_FREQ);
-    PWM_LOGINFO1(F("setFrequency: _CCMPValueRemaining = "), _CCMPValueRemaining);
-                
-    // Set the CCMP for the given timer,
-    // set the toggle count,
-    // then turn on the interrupts     
-    set_CCMP();
-    
-    interrupts();
+      // Reset value for next cycle, have to deduct the value already loaded to CCMP register 
+      _CCMPValueRemaining = _CCMPValue;
+      set_CCMP();
+      
+      _timerDone = false;
 
-    return true;
-  }
-}
+      interrupts();
+    };
 
-void TimerInterrupt::detachInterrupt(void)
-{
-  noInterrupts();
-     
-  // Clear interrupt flag
-  TimerTCB[_timer]->INTFLAGS = TCB_CAPT_bm;
-  TimerTCB[_timer]->INTCTRL  &= ~TCB_CAPT_bm;    // Disable the interrupt
-  TimerTCB[_timer]->CTRLA    &= ~TCB_ENABLE_bm;  // Disable timer
-  
-  interrupts();
-}
+    bool checkTimerDone() //__attribute__((always_inline))
+    {
+      return _timerDone;
+    };
 
-// Duration (in milliseconds). Duration = 0 or not specified => run indefinitely
-void TimerInterrupt::reattachInterrupt(unsigned long duration)
-{
-  noInterrupts();
+}; // class TimerInterrupt
 
-  // Calculate the toggle count
-  if (duration > 0)
-  {
-    _toggle_count = _frequency * duration / 1000;
-  }
-  else
-  {
-    _toggle_count = -1;
-  }
-    
-  // Set interrupt flag 
-  TimerTCB[_timer]->INTCTRL  |= TCB_CAPT_bm;    // Enable the interrupt
-  TimerTCB[_timer]->CTRLA    |= TCB_ENABLE_bm;  // Enable timer
-  
-  interrupts();
-}
+//////////////////////////////////////////////
 
-// Just stop clock source, still keep the count
-// To fix this.
-void TimerInterrupt::pauseTimer(void)
-{ 
-  detachInterrupt();
-}
 
-// Just reconnect clock source, continue from the current count
-void TimerInterrupt::resumeTimer(void)
-{ 
-  reattachInterrupt();
-}
+#endif    // MEGA_AVR_SLOW_PWM_HPP
 
-#endif // MEGA_AVR_SLOW_PWM_HPP

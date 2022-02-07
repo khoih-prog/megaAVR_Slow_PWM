@@ -14,6 +14,7 @@
 
 ## Table of Contents
 
+* [Important Change from v1.2.0](#Important-Change-from-v120)
 * [Why do we need this megaAVR_Slow_PWM library](#why-do-we-need-this-megaAVR_Slow_PWM-library)
   * [Features](#features)
   * [Why using ISR-based PWM is better](#why-using-isr-based-pwm-is-better)
@@ -38,6 +39,7 @@
   * [ 3. ISR_8_PWMs_Array_Simple](examples/ISR_8_PWMs_Array_Simple)
   * [ 4. ISR_Changing_PWM](examples/ISR_Changing_PWM)
   * [ 5. ISR_Modify_PWM](examples/ISR_Modify_PWM)
+  * [ 6. multiFileProject](examples/multiFileProject). **New**
 * [Example ISR_8_PWMs_Array_Complex](#Example-ISR_8_PWMs_Array_Complex)
 * [Debug Terminal Output Samples](#debug-terminal-output-samples)
   * [1. ISR_8_PWMs_Array_Complex on megaAVR Nano Every](#1-ISR_8_PWMs_Array_Complex-on-megaAVR-Nano-Every)
@@ -45,6 +47,7 @@
   * [3. ISR_8_PWMs_Array_Simple on megaAVR Nano Every](#3-ISR_8_PWMs_Array_Simple-on-megaAVR-Nano-Every)
   * [4. ISR_Modify_PWM on megaAVR Nano Every](#4-ISR_Modify_PWM-on-megaAVR-Nano-Every)
   * [5. ISR_Changing_PWM on megaAVR Nano Every](#5-ISR_Changing_PWM-on-megaAVR-Nano-Every)
+  * [6. ISR_Changing_PWM on MegaCoreX Nano Every](#6-ISR_Changing_PWM-on-MegaCoreX-Nano-Every)
 * [Debug](#debug)
 * [Troubleshooting](#troubleshooting)
 * [Issues](#issues)
@@ -54,6 +57,24 @@
 * [Contributing](#contributing)
 * [License](#license)
 * [Copyright](#copyright)
+
+---
+---
+
+### Important Change from v1.2.0
+
+Please have a look at [HOWTO Fix `Multiple Definitions` Linker Error](#howto-fix-multiple-definitions-linker-error)
+
+As more complex calculation and check **inside ISR** are introduced from v1.2.0, there is possibly some crash depending on use-case.
+
+You can modify to use larger `HW_TIMER_INTERVAL_US`, (from current 33.3uS), according to your board and use-case if crash happens.
+
+
+```
+// Don't change these numbers to make higher Timer freq. System can hang
+#define HW_TIMER_INTERVAL_MS        0.0333f
+#define HW_TIMER_INTERVAL_FREQ      30000L
+```
 
 ---
 ---
@@ -122,11 +143,13 @@ The catch is **your function is now part of an ISR (Interrupt Service Routine), 
 
 ## Prerequisites
 
- 1. [`Arduino IDE 1.8.19+` for Arduino](https://github.com/arduino/Arduino). [![GitHub release](https://img.shields.io/github/release/arduino/Arduino.svg)](https://github.com/arduino/Arduino/releases/latest)
- 2. [`Arduino megaAVR core 1.8.7+`](https://github.com/arduino/ArduinoCore-megaavr/releases) Use Arduino Board Manager to install.
- 
- 3. To use with certain example
-   - [`SimpleTimer library`](https://github.com/jfturcot/SimpleTimer) for [ISR_8_PWMs_Array_Complex example](examples/ISR_8_PWMs_Array_Complex).
+1. [`Arduino IDE 1.8.19+` for Arduino](https://github.com/arduino/Arduino). [![GitHub release](https://img.shields.io/github/release/arduino/Arduino.svg)](https://github.com/arduino/Arduino/releases/latest)
+2. [`Arduino megaAVR core 1.8.7+`](https://github.com/arduino/ArduinoCore-megaavr/releases) for Arduino megaAVR boards. Use Arduino Board Manager to install.
+3. [`MegaCoreX megaAVR core 1.0.9+`](https://github.com/MCUdude/MegaCoreX/releases) for Arduino megaAVR boards.  [![GitHub release](https://img.shields.io/github/release/MCUdude/MegaCoreX.svg)](https://github.com/MCUdude/MegaCoreX/releases/latest). Follow [**How to install**](https://github.com/MCUdude/MegaCoreX#how-to-install).
+4. To use with certain example
+   - [`SimpleTimer library`](https://github.com/jfturcot/SimpleTimer) for [ISR_Timers_Array_Simple](examples/ISR_Timers_Array_Simple) and [ISR_16_Timers_Array_Complex](examples/ISR_16_Timers_Array_Complex) examples.
+   
+   
 ---
 ---
 
@@ -159,24 +182,25 @@ Another way to install is to:
 
 ### HOWTO Fix `Multiple Definitions` Linker Error
 
-The current library implementation, using **xyz-Impl.h instead of standard xyz.cpp**, possibly creates certain `Multiple Definitions` Linker error in certain use cases. Although it's simple to just modify several lines of code, either in the library or in the application, the library is adding 2 more source directories
+The current library implementation, using `xyz-Impl.h` instead of standard `xyz.cpp`, possibly creates certain `Multiple Definitions` Linker error in certain use cases.
 
-1. **scr_h** for new h-only files
-2. **src_cpp** for standard h/cpp files
+You can include this `.hpp` file
 
-besides the standard **src** directory.
+```
+// Can be included as many times as necessary, without `Multiple Definitions` Linker Error
+#include "megaAVR_Slow_PWM.hpp"     //https://github.com/khoih-prog/megaAVR_Slow_PWM
+```
 
-To use the **old standard cpp** way, locate this library' directory, then just 
+in many files. But be sure to use the following `.h` file **in just 1 `.h`, `.cpp` or `.ino` file**, which must **not be included in any other file**, to avoid `Multiple Definitions` Linker Error
 
-1. **Delete the all the files in src directory.**
-2. **Copy all the files in src_cpp directory into src.**
-3. Close then reopen the application code in Arduino IDE, etc. to recompile from scratch.
+```
+// To be included only in main(), .ino with setup() to avoid `Multiple Definitions` Linker Error
+#include "megaAVR_Slow_PWM.h"           //https://github.com/khoih-prog/megaAVR_Slow_PWM
+```
 
-To re-use the **new h-only** way, just 
+Check the new [**multiFileProject** example](examples/multiFileProject) for a `HOWTO` demo.
 
-1. **Delete the all the files in src directory.**
-2. **Copy the files in src_h directory into src.**
-3. Close then reopen the application code in Arduino IDE, etc. to recompile from scratch.
+Have a look at the discussion in [Different behaviour using the src_cpp or src_h lib #80](https://github.com/khoih-prog/ESPAsync_WiFiManager/discussions/80)
 
 ---
 ---
@@ -255,6 +279,7 @@ void setup()
  3. [ISR_8_PWMs_Array_Simple](examples/ISR_8_PWMs_Array_Simple)
  4. [ISR_Changing_PWM](examples/ISR_Changing_PWM)
  5. [ISR_Modify_PWM](examples/ISR_Modify_PWM)
+ 6. [**multiFileProject**](examples/multiFileProject) **New**
 
  
 ---
@@ -263,10 +288,11 @@ void setup()
 ### Example [ISR_8_PWMs_Array_Complex](examples/ISR_8_PWMs_Array_Complex)
 
 ```
-#if ( defined(__AVR_ATmega4809__) || defined(ARDUINO_AVR_UNO_WIFI_REV2) || defined(ARDUINO_AVR_NANO_EVERY) )
-
-#else
-  #error This is designed only for Arduino megaAVR board! Please check your Tools->Board setting.
+#if !( defined(__AVR_ATmega4809__) || defined(ARDUINO_AVR_UNO_WIFI_REV2) || defined(ARDUINO_AVR_NANO_EVERY) || \
+      defined(ARDUINO_AVR_ATmega4809) || defined(ARDUINO_AVR_ATmega4808) || defined(ARDUINO_AVR_ATmega3209) || \
+      defined(ARDUINO_AVR_ATmega3208) || defined(ARDUINO_AVR_ATmega1609) || defined(ARDUINO_AVR_ATmega1608) || \
+      defined(ARDUINO_AVR_ATmega809) || defined(ARDUINO_AVR_ATmega808) )
+  #error This is designed only for Arduino or MegaCoreX megaAVR board! Please check your Tools->Board setting
 #endif
 
 // These define's must be placed at the beginning before #include "ESP32_PWM.h"
@@ -289,6 +315,7 @@ void setup()
 
 #define USING_MICROS_RESOLUTION       true  //false 
 
+// To be included only in main(), .ino with setup() to avoid `Multiple Definitions` Linker Error
 #include "megaAVR_Slow_PWM.h"
 
 #include <SimpleTimer.h>              // https://github.com/jfturcot/SimpleTimer
@@ -382,29 +409,29 @@ void doingSomethingStop(int index);
 
 #else   // #if USE_COMPLEX_STRUCT
 
-volatile unsigned long deltaMicrosStart    [NUMBER_ISR_PWMS] = { 0, 0, 0, 0, 0, 0, 0, 0 };
-volatile unsigned long previousMicrosStart [NUMBER_ISR_PWMS] = { 0, 0, 0, 0, 0, 0, 0, 0 };
+volatile unsigned long deltaMicrosStart    [] = { 0, 0, 0, 0, 0, 0, 0, 0 };
+volatile unsigned long previousMicrosStart [] = { 0, 0, 0, 0, 0, 0, 0, 0 };
 
-volatile unsigned long deltaMicrosStop     [NUMBER_ISR_PWMS] = { 0, 0, 0, 0, 0, 0, 0, 0 };
-volatile unsigned long previousMicrosStop  [NUMBER_ISR_PWMS] = { 0, 0, 0, 0, 0, 0, 0, 0 };
+volatile unsigned long deltaMicrosStop     [] = { 0, 0, 0, 0, 0, 0, 0, 0 };
+volatile unsigned long previousMicrosStop  [] = { 0, 0, 0, 0, 0, 0, 0, 0 };
 
 
 // You can assign any interval for any timer here, in Microseconds
-uint32_t PWM_Period[NUMBER_ISR_PWMS] =
+uint32_t PWM_Period[] =
 {
   1000L,   500L,   333L,   250L,   200L,   166L,   142L,   125L
 };
 
 // You can assign any interval for any timer here, in Hz
-double PWM_Freq[NUMBER_ISR_PWMS] =
+float PWM_Freq[] =
 {
   1.0f,  2.0f,  3.0f,  4.0f,  5.0f,  6.0f,  7.0f,  8.0f,
 };
 
 // You can assign any interval for any timer here, in Microseconds
-uint32_t PWM_DutyCycle[NUMBER_ISR_PWMS] =
+float PWM_DutyCycle[] =
 {
-  5, 10, 20, 25, 30, 35, 40, 45
+  5.0, 10.0, 20.0, 30.0, 40.0, 45.0, 50.0, 55.0
 };
 
 void doingSomethingStart(int index)
@@ -518,17 +545,17 @@ void doingSomethingStop7()
 
 #if USE_COMPLEX_STRUCT
 
-ISR_PWM_Data curISR_PWM_Data[NUMBER_ISR_PWMS] =
+ISR_PWM_Data curISR_PWM_Data[] =
 {
   // pin, irqCallbackStartFunc, irqCallbackStopFunc, PWM_Freq, PWM_DutyCycle, deltaMicrosStart, previousMicrosStart, deltaMicrosStop, previousMicrosStop
   { LED_BUILTIN,  doingSomethingStart0,    doingSomethingStop0,    1,   5, 0, 0, 0, 0 },
   { PIN_D0,       doingSomethingStart1,    doingSomethingStop1,    2,  10, 0, 0, 0, 0 },
   { PIN_D1,       doingSomethingStart2,    doingSomethingStop2,    3,  20, 0, 0, 0, 0 },
-  { PIN_D2,       doingSomethingStart3,    doingSomethingStop3,    4,  25, 0, 0, 0, 0 },
-  { PIN_D3,       doingSomethingStart4,    doingSomethingStop4,    5,  30, 0, 0, 0, 0 },
-  { PIN_D4,       doingSomethingStart5,    doingSomethingStop5,    6,  35, 0, 0, 0, 0 },
-  { PIN_D5,       doingSomethingStart6,    doingSomethingStop6,    7,  40, 0, 0, 0, 0 },
-  { PIN_D6,       doingSomethingStart7,    doingSomethingStop7,    8,  45, 0, 0, 0, 0 },
+  { PIN_D2,       doingSomethingStart3,    doingSomethingStop3,    4,  30, 0, 0, 0, 0 },
+  { PIN_D3,       doingSomethingStart4,    doingSomethingStop4,    5,  40, 0, 0, 0, 0 },
+  { PIN_D4,       doingSomethingStart5,    doingSomethingStop5,    6,  45, 0, 0, 0, 0 },
+  { PIN_D5,       doingSomethingStart6,    doingSomethingStop6,    7,  50, 0, 0, 0, 0 },
+  { PIN_D6,       doingSomethingStart7,    doingSomethingStop7,    8,  55, 0, 0, 0, 0 },
 };
 
 
@@ -552,13 +579,13 @@ void doingSomethingStop(int index)
 
 #else   // #if USE_COMPLEX_STRUCT
 
-irqCallback irqCallbackStartFunc[NUMBER_ISR_PWMS] =
+irqCallback irqCallbackStartFunc[] =
 {
   doingSomethingStart0,  doingSomethingStart1,  doingSomethingStart2,  doingSomethingStart3,
   doingSomethingStart4,  doingSomethingStart5,  doingSomethingStart6,  doingSomethingStart7
 };
 
-irqCallback irqCallbackStopFunc[NUMBER_ISR_PWMS] =
+irqCallback irqCallbackStopFunc[] =
 {
   doingSomethingStop0,  doingSomethingStop1,  doingSomethingStop2,  doingSomethingStop3,
   doingSomethingStop4,  doingSomethingStop5,  doingSomethingStop6,  doingSomethingStop7
@@ -728,7 +755,7 @@ void setup()
     curISR_PWM_Data[i].previousMicrosStart = startMicros;
     //ISR_PWM.setInterval(curISR_PWM_Data[i].PWM_Period, curISR_PWM_Data[i].irqCallbackStartFunc);
 
-    //void setPWM(uint32_t pin, uint32_t frequency, uint32_t dutycycle
+    //void setPWM(uint32_t pin, float frequency, float dutycycle
     // , timer_callback_p StartCallback = nullptr, timer_callback_p StopCallback = nullptr)
 
     // You can use this with PWM_Freq in Hz
@@ -770,66 +797,78 @@ void loop()
 
 ### 1. ISR_8_PWMs_Array_Complex on megaAVR Nano Every
 
-The following is the sample terminal output when running example [ISR_8_PWMs_Array_Complex](examples/ISR_8_PWMs_Array_Complex) to demonstrate how to use multiple PWM channels with complex callback functions, the accuracy of ISR Hardware PWM-channels, **especially when system is very busy**.  The ISR PWM-channels is **running exactly according to corresponding programmed periods and duty-cycles**
+The following is the sample terminal output when running example [ISR_8_PWMs_Array_Complex](examples/ISR_8_PWMs_Array_Complex) **megaAVR Nano Every** to demonstrate how to use multiple PWM channels with complex callback functions, the accuracy of ISR Hardware PWM-channels, **especially when system is very busy**.  The ISR PWM-channels is **running exactly according to corresponding programmed periods and duty-cycles**
 
 
 ```
 Starting ISR_8_PWMs_Array_Complex on megaAVR Nano Every
-megaAVR_SLOW_PWM v1.1.0
+megaAVR_SLOW_PWM v1.2.0
 CPU Frequency = 16 MHz
 TCB Clock Frequency = 16MHz for highest accuracy
 [PWM] TCB 1
 [PWM] ==================
-[PWM] Init, Timer = 1
-[PWM] CTRLB   = 0
-[PWM] CCMP    = 65535
-[PWM] INTCTRL = 0
-[PWM] CTRLA   = 1
+[PWM] Init, Timer =  1
+[PWM] CTRLB   =  0
+[PWM] CCMP    =  65535
+[PWM] INTCTRL =  0
+[PWM] CTRLA   =  1
 [PWM] ==================
-[PWM] Frequency = 30000.00 , CLK_TCB_FREQ = 16000000
+[PWM] Frequency =  30000.00 , CLK_TCB_FREQ =  16000000
 [PWM] setFrequency: _CCMPValueRemaining =  533
-[PWM] ==================
-[PWM] set_CCMP, Timer = 1
-[PWM] CTRLB   = 0
-[PWM] CCMP    = 533
-[PWM] INTCTRL = 1
-[PWM] CTRLA   = 1
-Starting  ITimer1 OK, micros() = 2013088
-Channel : 0	Period : 1000000		OnTime : 50000	Start_Time : 2014076
-Channel : 1	Period : 500000		OnTime : 50000	Start_Time : 2014076
-Channel : 2	Period : 333333		OnTime : 66666	Start_Time : 2014076
-Channel : 3	Period : 250000		OnTime : 62500	Start_Time : 2014076
-Channel : 4	Period : 200000		OnTime : 60000	Start_Time : 2014076
-Channel : 5	Period : 166666		OnTime : 58333	Start_Time : 2014076
-Channel : 6	Period : 142857		OnTime : 57142	Start_Time : 2014076
-Channel : 7	Period : 125000		OnTime : 56250	Start_Time : 2014076
-SimpleTimer (us): 2000, us : 12060576, Dus : 10046608
-PWM Channel : 0, prog Period (ms): 1000.00, actual : 1000048, prog DutyCycle : 5, actual : 5.00
-PWM Channel : 1, prog Period (ms): 500.00, actual : 500120, prog DutyCycle : 10, actual : 9.99
-PWM Channel : 2, prog Period (ms): 333.33, actual : 333344, prog DutyCycle : 20, actual : 19.99
-PWM Channel : 3, prog Period (ms): 250.00, actual : 250004, prog DutyCycle : 25, actual : 24.97
-PWM Channel : 4, prog Period (ms): 200.00, actual : 200012, prog DutyCycle : 30, actual : 29.99
-PWM Channel : 5, prog Period (ms): 166.67, actual : 166668, prog DutyCycle : 35, actual : 34.97
-PWM Channel : 6, prog Period (ms): 142.86, actual : 142868, prog DutyCycle : 40, actual : 40.02
-PWM Channel : 7, prog Period (ms): 125.00, actual : 125048, prog DutyCycle : 45, actual : 44.92
-SimpleTimer (us): 2000, us : 22128588, Dus : 10068012
-PWM Channel : 0, prog Period (ms): 1000.00, actual : 1000012, prog DutyCycle : 5, actual : 4.99
-PWM Channel : 1, prog Period (ms): 500.00, actual : 500092, prog DutyCycle : 10, actual : 9.99
+Starting  ITimer1 OK, micros() = 2013580
+Channel : 0	    Period : 1000000		OnTime : 50000	Start_Time : 2015636
+Channel : 1	    Period : 500000		OnTime : 50000	Start_Time : 2021248
+Channel : 2	    Period : 333333		OnTime : 66666	Start_Time : 2027536
+Channel : 3	    Period : 250000		OnTime : 75000	Start_Time : 2033868
+Channel : 4	    Period : 200000		OnTime : 80000	Start_Time : 2040224
+Channel : 5	    Period : 166666		OnTime : 74999	Start_Time : 2047760
+Channel : 6	    Period : 142857		OnTime : 71428	Start_Time : 2056708
+Channel : 7	    Period : 125000		OnTime : 68750	Start_Time : 2065380
+SimpleTimer (us): 2000, us : 12076620, Dus : 10061960
+PWM Channel : 0, prog Period (ms): 1000.00, actual : 1000016, prog DutyCycle : 5, actual : 5.00
+PWM Channel : 1, prog Period (ms): 500.00, actual : 500020, prog DutyCycle : 10, actual : 9.99
+PWM Channel : 2, prog Period (ms): 333.33, actual : 333376, prog DutyCycle : 20, actual : 19.97
+PWM Channel : 3, prog Period (ms): 250.00, actual : 250008, prog DutyCycle : 30, actual : 30.00
+PWM Channel : 4, prog Period (ms): 200.00, actual : 200044, prog DutyCycle : 40, actual : 40.00
+PWM Channel : 5, prog Period (ms): 166.67, actual : 166640, prog DutyCycle : 45, actual : 45.01
+PWM Channel : 6, prog Period (ms): 142.86, actual : 142872, prog DutyCycle : 50, actual : 50.00
+PWM Channel : 7, prog Period (ms): 125.00, actual : 124980, prog DutyCycle : 55, actual : 55.02
+SimpleTimer (us): 2000, us : 22180588, Dus : 10103968
+PWM Channel : 0, prog Period (ms): 1000.00, actual : 1000016, prog DutyCycle : 5, actual : 4.99
+PWM Channel : 1, prog Period (ms): 500.00, actual : 500056, prog DutyCycle : 10, actual : 9.99
 PWM Channel : 2, prog Period (ms): 333.33, actual : 333380, prog DutyCycle : 20, actual : 19.98
-PWM Channel : 3, prog Period (ms): 250.00, actual : 249976, prog DutyCycle : 25, actual : 25.00
-PWM Channel : 4, prog Period (ms): 200.00, actual : 200008, prog DutyCycle : 30, actual : 29.96
-PWM Channel : 5, prog Period (ms): 166.67, actual : 166664, prog DutyCycle : 35, actual : 34.95
-PWM Channel : 6, prog Period (ms): 142.86, actual : 143024, prog DutyCycle : 40, actual : 39.93
-PWM Channel : 7, prog Period (ms): 125.00, actual : 125068, prog DutyCycle : 45, actual : 44.96
-SimpleTimer (us): 2000, us : 32200044, Dus : 10071456
-PWM Channel : 0, prog Period (ms): 1000.00, actual : 1000048, prog DutyCycle : 5, actual : 4.99
+PWM Channel : 3, prog Period (ms): 250.00, actual : 249972, prog DutyCycle : 30, actual : 29.99
+PWM Channel : 4, prog Period (ms): 200.00, actual : 199992, prog DutyCycle : 40, actual : 39.97
+PWM Channel : 5, prog Period (ms): 166.67, actual : 166716, prog DutyCycle : 45, actual : 44.97
+PWM Channel : 6, prog Period (ms): 142.86, actual : 142992, prog DutyCycle : 50, actual : 49.90
+PWM Channel : 7, prog Period (ms): 125.00, actual : 125108, prog DutyCycle : 55, actual : 54.90
+SimpleTimer (us): 2000, us : 32320408, Dus : 10139820
+PWM Channel : 0, prog Period (ms): 1000.00, actual : 1000084, prog DutyCycle : 5, actual : 4.99
 PWM Channel : 1, prog Period (ms): 500.00, actual : 500088, prog DutyCycle : 10, actual : 9.99
-PWM Channel : 2, prog Period (ms): 333.33, actual : 333344, prog DutyCycle : 20, actual : 20.01
-PWM Channel : 3, prog Period (ms): 250.00, actual : 249976, prog DutyCycle : 25, actual : 24.99
-PWM Channel : 4, prog Period (ms): 200.00, actual : 200056, prog DutyCycle : 30, actual : 29.95
-PWM Channel : 5, prog Period (ms): 166.67, actual : 166748, prog DutyCycle : 35, actual : 34.97
-PWM Channel : 6, prog Period (ms): 142.86, actual : 142992, prog DutyCycle : 40, actual : 39.91
-PWM Channel : 7, prog Period (ms): 125.00, actual : 125136, prog DutyCycle : 45, actual : 44.91
+PWM Channel : 2, prog Period (ms): 333.33, actual : 333388, prog DutyCycle : 20, actual : 19.97
+PWM Channel : 3, prog Period (ms): 250.00, actual : 250052, prog DutyCycle : 30, actual : 29.96
+PWM Channel : 4, prog Period (ms): 200.00, actual : 200060, prog DutyCycle : 40, actual : 39.97
+PWM Channel : 5, prog Period (ms): 166.67, actual : 166640, prog DutyCycle : 45, actual : 44.96
+PWM Channel : 6, prog Period (ms): 142.86, actual : 142912, prog DutyCycle : 50, actual : 49.93
+PWM Channel : 7, prog Period (ms): 125.00, actual : 125084, prog DutyCycle : 55, actual : 54.91
+SimpleTimer (us): 2000, us : 42478424, Dus : 10158016
+PWM Channel : 0, prog Period (ms): 1000.00, actual : 1000048, prog DutyCycle : 5, actual : 5.00
+PWM Channel : 1, prog Period (ms): 500.00, actual : 500020, prog DutyCycle : 10, actual : 9.99
+PWM Channel : 2, prog Period (ms): 333.33, actual : 333384, prog DutyCycle : 20, actual : 19.97
+PWM Channel : 3, prog Period (ms): 250.00, actual : 250076, prog DutyCycle : 30, actual : 29.96
+PWM Channel : 4, prog Period (ms): 200.00, actual : 200116, prog DutyCycle : 40, actual : 39.93
+PWM Channel : 5, prog Period (ms): 166.67, actual : 166704, prog DutyCycle : 45, actual : 44.97
+PWM Channel : 6, prog Period (ms): 142.86, actual : 142944, prog DutyCycle : 50, actual : 49.94
+PWM Channel : 7, prog Period (ms): 125.00, actual : 125056, prog DutyCycle : 55, actual : 54.93
+SimpleTimer (us): 2000, us : 52642384, Dus : 10163960
+PWM Channel : 0, prog Period (ms): 1000.00, actual : 1000080, prog DutyCycle : 5, actual : 4.99
+PWM Channel : 1, prog Period (ms): 500.00, actual : 500028, prog DutyCycle : 10, actual : 9.99
+PWM Channel : 2, prog Period (ms): 333.33, actual : 333420, prog DutyCycle : 20, actual : 19.97
+PWM Channel : 3, prog Period (ms): 250.00, actual : 250012, prog DutyCycle : 30, actual : 29.97
+PWM Channel : 4, prog Period (ms): 200.00, actual : 200016, prog DutyCycle : 40, actual : 39.96
+PWM Channel : 5, prog Period (ms): 166.67, actual : 166744, prog DutyCycle : 45, actual : 44.98
+PWM Channel : 6, prog Period (ms): 142.86, actual : 142884, prog DutyCycle : 50, actual : 49.94
+PWM Channel : 7, prog Period (ms): 125.00, actual : 124988, prog DutyCycle : 55, actual : 54.98
 ```
 
 ---
@@ -840,34 +879,28 @@ The following is the sample terminal output when running example [**ISR_8_PWMs_A
 
 ```
 Starting ISR_8_PWMs_Array on megaAVR Nano Every
-megaAVR_SLOW_PWM v1.1.0
+megaAVR_SLOW_PWM v1.2.0
 CPU Frequency = 16 MHz
 TCB Clock Frequency = 16MHz for highest accuracy
 [PWM] TCB 1
 [PWM] ==================
-[PWM] Init, Timer = 1
-[PWM] CTRLB   = 0
-[PWM] CCMP    = 65535
-[PWM] INTCTRL = 0
-[PWM] CTRLA   = 1
+[PWM] Init, Timer =  1
+[PWM] CTRLB   =  0
+[PWM] CCMP    =  65535
+[PWM] INTCTRL =  0
+[PWM] CTRLA   =  1
 [PWM] ==================
-[PWM] Frequency = 30000.00 , CLK_TCB_FREQ = 16000000
+[PWM] Frequency =  30000.00 , CLK_TCB_FREQ =  16000000
 [PWM] setFrequency: _CCMPValueRemaining =  533
-[PWM] ==================
-[PWM] set_CCMP, Timer = 1
-[PWM] CTRLB   = 0
-[PWM] CCMP    = 533
-[PWM] INTCTRL = 1
-[PWM] CTRLA   = 1
-Starting  ITimer1 OK, micros() = 2012384
-Channel : 0	Period : 1000000		OnTime : 50000	Start_Time : 2013376
-Channel : 1	Period : 500000		OnTime : 50000	Start_Time : 2013376
-Channel : 2	Period : 333333		OnTime : 66666	Start_Time : 2013376
-Channel : 3	Period : 250000		OnTime : 62500	Start_Time : 2013376
-Channel : 4	Period : 200000		OnTime : 60000	Start_Time : 2013376
-Channel : 5	Period : 166666		OnTime : 58333	Start_Time : 2013376
-Channel : 6	Period : 142857		OnTime : 57142	Start_Time : 2013376
-Channel : 7	Period : 125000		OnTime : 56250	Start_Time : 2013376
+Starting  ITimer1 OK, micros() = 2012864
+Channel : 0	    Period : 1000000		OnTime : 50000	Start_Time : 2014864
+Channel : 1	    Period : 500000		OnTime : 50000	Start_Time : 2020544
+Channel : 2	    Period : 333333		OnTime : 66666	Start_Time : 2026820
+Channel : 3	    Period : 250000		OnTime : 75000	Start_Time : 2033152
+Channel : 4	    Period : 200000		OnTime : 80000	Start_Time : 2039500
+Channel : 5	    Period : 166666		OnTime : 74999	Start_Time : 2046984
+Channel : 6	    Period : 142857		OnTime : 71428	Start_Time : 2055924
+Channel : 7	    Period : 125000		OnTime : 68750	Start_Time : 2064600
 ```
 
 ---
@@ -877,36 +910,29 @@ Channel : 7	Period : 125000		OnTime : 56250	Start_Time : 2013376
 The following is the sample terminal output when running example [**ISR_8_PWMs_Array_Simple**](examples/ISR_8_PWMs_Array_Simple) on **megaAVR Nano Every** to demonstrate how to use multiple PWM channels.
 
 ```
-
 Starting ISR_8_PWMs_Array_Simple on megaAVR Nano Every
-megaAVR_SLOW_PWM v1.1.0
+megaAVR_SLOW_PWM v1.2.0
 CPU Frequency = 16 MHz
 TCB Clock Frequency = 16MHz for highest accuracy
 [PWM] TCB 1
 [PWM] ==================
-[PWM] Init, Timer = 1
-[PWM] CTRLB   = 0
-[PWM] CCMP    = 65535
-[PWM] INTCTRL = 0
-[PWM] CTRLA   = 1
+[PWM] Init, Timer =  1
+[PWM] CTRLB   =  0
+[PWM] CCMP    =  65535
+[PWM] INTCTRL =  0
+[PWM] CTRLA   =  1
 [PWM] ==================
-[PWM] Frequency = 30000.00 , CLK_TCB_FREQ = 16000000
+[PWM] Frequency =  30000.00 , CLK_TCB_FREQ =  16000000
 [PWM] setFrequency: _CCMPValueRemaining =  533
-[PWM] ==================
-[PWM] set_CCMP, Timer = 1
-[PWM] CTRLB   = 0
-[PWM] CCMP    = 533
-[PWM] INTCTRL = 1
-[PWM] CTRLA   = 1
-Starting  ITimer1 OK, micros() = 2011960
-Channel : 0	Period : 1000000		OnTime : 50000	Start_Time : 2012956
-Channel : 1	Period : 500000		OnTime : 50000	Start_Time : 2012956
-Channel : 2	Period : 333333		OnTime : 66666	Start_Time : 2012956
-Channel : 3	Period : 250000		OnTime : 62500	Start_Time : 2012956
-Channel : 4	Period : 200000		OnTime : 60000	Start_Time : 2012956
-Channel : 5	Period : 166666		OnTime : 58333	Start_Time : 2012956
-Channel : 6	Period : 142857		OnTime : 57142	Start_Time : 2012956
-Channel : 7	Period : 125000		OnTime : 56250	Start_Time : 2012956
+Starting  ITimer1 OK, micros() = 2012448
+Channel : 0	    Period : 1000000		OnTime : 50000	Start_Time : 2014448
+Channel : 1	    Period : 500000		OnTime : 50000	Start_Time : 2020112
+Channel : 2	    Period : 333333		OnTime : 66666	Start_Time : 2026388
+Channel : 3	    Period : 250000		OnTime : 75000	Start_Time : 2032672
+Channel : 4	    Period : 200000		OnTime : 80000	Start_Time : 2039076
+Channel : 5	    Period : 166666		OnTime : 74999	Start_Time : 2046548
+Channel : 6	    Period : 142857		OnTime : 71428	Start_Time : 2055500
+Channel : 7	    Period : 125000		OnTime : 68750	Start_Time : 2064172
 ```
 
 ---
@@ -917,31 +943,24 @@ The following is the sample terminal output when running example [ISR_Modify_PWM
 
 ```
 Starting ISR_Modify_PWM on megaAVR Nano Every
-megaAVR_SLOW_PWM v1.1.0
+megaAVR_SLOW_PWM v1.2.0
 CPU Frequency = 16 MHz
 TCB Clock Frequency = 16MHz for highest accuracy
 [PWM] TCB 1
 [PWM] ==================
-[PWM] Init, Timer = 1
-[PWM] CTRLB   = 0
-[PWM] CCMP    = 65535
-[PWM] INTCTRL = 0
-[PWM] CTRLA   = 1
+[PWM] Init, Timer =  1
+[PWM] CTRLB   =  0
+[PWM] CCMP    =  65535
+[PWM] INTCTRL =  0
+[PWM] CTRLA   =  1
 [PWM] ==================
-[PWM] Frequency = 30000.00 , CLK_TCB_FREQ = 16000000
+[PWM] Frequency =  30000.00 , CLK_TCB_FREQ =  16000000
 [PWM] setFrequency: _CCMPValueRemaining =  533
-[PWM] ==================
-[PWM] set_CCMP, Timer = 1
-[PWM] CTRLB   = 0
-[PWM] CCMP    = 533
-[PWM] INTCTRL = 1
-[PWM] CTRLA   = 1
-Starting  ITimer1 OK, micros() = 2012212
-Using PWM Freq = 1.00, PWM DutyCycle = 10
-Channel : 0	Period : 1000000		OnTime : 100000	Start_Time : 2017184
-Channel : 0	Period : 500000		OnTime : 450000	Start_Time : 12024008
-Channel : 0	Period : 1000000		OnTime : 100000	Start_Time : 22024396
-Channel : 0	Period : 500000		OnTime : 450000	Start_Time : 32025840
+Starting  ITimer1 OK, micros() = 2012696
+Using PWM Freq = 1.00, PWM DutyCycle = 50.00
+Channel : 0	    Period : 1000000		OnTime : 500000	Start_Time : 2018640
+Channel : 0	New Period : 500000		OnTime : 450000	Start_Time : 12019140
+Channel : 0	New Period : 1000000		OnTime : 500000	Start_Time : 22019624
 ```
 
 ---
@@ -952,36 +971,96 @@ The following is the sample terminal output when running example [ISR_Changing_P
 
 ```
 Starting ISR_Changing_PWM on megaAVR Nano Every
-megaAVR_SLOW_PWM v1.1.0
+megaAVR_SLOW_PWM v1.2.0
 CPU Frequency = 16 MHz
 TCB Clock Frequency = 16MHz for highest accuracy
 [PWM] TCB 1
 [PWM] ==================
-[PWM] Init, Timer = 1
-[PWM] CTRLB   = 0
-[PWM] CCMP    = 65535
-[PWM] INTCTRL = 0
-[PWM] CTRLA   = 1
+[PWM] Init, Timer =  1
+[PWM] CTRLB   =  0
+[PWM] CCMP    =  65535
+[PWM] INTCTRL =  0
+[PWM] CTRLA   =  1
 [PWM] ==================
-[PWM] Frequency = 30000.00 , CLK_TCB_FREQ = 16000000
+[PWM] Frequency =  30000.00 , CLK_TCB_FREQ =  16000000
 [PWM] setFrequency: _CCMPValueRemaining =  533
-[PWM] ==================
-[PWM] set_CCMP, Timer = 1
-[PWM] CTRLB   = 0
-[PWM] CCMP    = 533
-[PWM] INTCTRL = 1
-[PWM] CTRLA   = 1
-Starting  ITimer1 OK, micros() = 2012392
-Using PWM Freq = 1.00, PWM DutyCycle = 50
-Channel : 0	Period : 1000000		OnTime : 500000	Start_Time : 2017384
-Using PWM Freq = 2.00, PWM DutyCycle = 90
-Channel : 0	Period : 500000		OnTime : 450000	Start_Time : 12024552
-Using PWM Freq = 1.00, PWM DutyCycle = 50
-Channel : 0	Period : 1000000		OnTime : 500000	Start_Time : 22029376
-Using PWM Freq = 2.00, PWM DutyCycle = 90
-Channel : 0	Period : 500000		OnTime : 450000	Start_Time : 32034340
+Starting  ITimer1 OK, micros() = 2012872
+Using PWM Freq = 1.00, PWM DutyCycle = 50.00
+Channel : 0	    Period : 1000000		OnTime : 500000	Start_Time : 2018824
+Using PWM Freq = 2.00, PWM DutyCycle = 90.00
+Channel : 0	    Period : 500000		OnTime : 450000	Start_Time : 12026916
+Using PWM Freq = 1.00, PWM DutyCycle = 50.00
+Channel : 0	    Period : 1000000		OnTime : 500000	Start_Time : 22033944
 ```
 
+---
+
+### 6. ISR_8_PWMs_Array_Complex on MegaCoreX Nano Every
+
+The following is the sample terminal output when running example [ISR_8_PWMs_Array_Complex](examples/ISR_8_PWMs_Array_Complex) **MegaCoreX Nano Every** to demonstrate how to use multiple PWM channels with complex callback functions, the accuracy of ISR Hardware PWM-channels, **especially when system is very busy**.  The ISR PWM-channels is **running exactly according to corresponding programmed periods and duty-cycles**
+
+
+```
+Starting ISR_8_PWMs_Array_Complex on MegaCoreX Nano Every
+megaAVR_SLOW_PWM v1.2.0
+CPU Frequency = 16 MHz
+TCB Clock Frequency = 16MHz for highest accuracy
+[PWM] TCB 1
+[PWM] ==================
+[PWM] Init, Timer =  1
+[PWM] CTRLB   =  0
+[PWM] CCMP    =  65535
+[PWM] INTCTRL =  0
+[PWM] CTRLA   =  1
+[PWM] ==================
+[PWM] Frequency =  30000.00 , CLK_TCB_FREQ =  16000000
+[PWM] setFrequency: _CCMPValueRemaining =  533
+Starting  ITimer1 OK, micros() = 2013258
+Channel : 0	    Period : 1000000		OnTime : 50000	Start_Time : 2015189
+Channel : 1	    Period : 500000		OnTime : 50000	Start_Time : 2020809
+Channel : 2	    Period : 333333		OnTime : 66666	Start_Time : 2027083
+Channel : 3	    Period : 250000		OnTime : 75000	Start_Time : 2033362
+Channel : 4	    Period : 200000		OnTime : 80000	Start_Time : 2039701
+Channel : 5	    Period : 166666		OnTime : 74999	Start_Time : 2046513
+Channel : 6	    Period : 142857		OnTime : 71428	Start_Time : 2054578
+Channel : 7	    Period : 125000		OnTime : 68750	Start_Time : 2063400
+SimpleTimer (us): 2000, us : 12073263, Dus : 10058994
+PWM Channel : 0, prog Period (ms): 1000.00, actual : 1000082, prog DutyCycle : 5, actual : 4.99
+PWM Channel : 1, prog Period (ms): 500.00, actual : 500023, prog DutyCycle : 10, actual : 9.99
+PWM Channel : 2, prog Period (ms): 333.33, actual : 333377, prog DutyCycle : 20, actual : 19.98
+PWM Channel : 3, prog Period (ms): 250.00, actual : 250008, prog DutyCycle : 30, actual : 29.99
+PWM Channel : 4, prog Period (ms): 200.00, actual : 200010, prog DutyCycle : 40, actual : 39.99
+PWM Channel : 5, prog Period (ms): 166.67, actual : 166667, prog DutyCycle : 45, actual : 45.00
+PWM Channel : 6, prog Period (ms): 142.86, actual : 142869, prog DutyCycle : 50, actual : 50.00
+PWM Channel : 7, prog Period (ms): 125.00, actual : 125015, prog DutyCycle : 55, actual : 55.01
+SimpleTimer (us): 2000, us : 22182603, Dus : 10109340
+PWM Channel : 0, prog Period (ms): 1000.00, actual : 1000049, prog DutyCycle : 5, actual : 4.99
+PWM Channel : 1, prog Period (ms): 500.00, actual : 500022, prog DutyCycle : 10, actual : 9.99
+PWM Channel : 2, prog Period (ms): 333.33, actual : 333410, prog DutyCycle : 20, actual : 19.98
+PWM Channel : 3, prog Period (ms): 250.00, actual : 250049, prog DutyCycle : 30, actual : 29.98
+PWM Channel : 4, prog Period (ms): 200.00, actual : 200058, prog DutyCycle : 40, actual : 39.97
+PWM Channel : 5, prog Period (ms): 166.67, actual : 166641, prog DutyCycle : 45, actual : 44.96
+PWM Channel : 6, prog Period (ms): 142.86, actual : 142910, prog DutyCycle : 50, actual : 49.93
+PWM Channel : 7, prog Period (ms): 125.00, actual : 125054, prog DutyCycle : 55, actual : 54.93
+SimpleTimer (us): 2000, us : 32535226, Dus : 10352623
+PWM Channel : 0, prog Period (ms): 1000.00, actual : 1000049, prog DutyCycle : 5, actual : 4.99
+PWM Channel : 1, prog Period (ms): 500.00, actual : 500026, prog DutyCycle : 10, actual : 9.99
+PWM Channel : 2, prog Period (ms): 333.33, actual : 333385, prog DutyCycle : 20, actual : 19.98
+PWM Channel : 3, prog Period (ms): 250.00, actual : 250013, prog DutyCycle : 30, actual : 29.98
+PWM Channel : 4, prog Period (ms): 200.00, actual : 200016, prog DutyCycle : 40, actual : 39.96
+PWM Channel : 5, prog Period (ms): 166.67, actual : 166673, prog DutyCycle : 45, actual : 44.98
+PWM Channel : 6, prog Period (ms): 142.86, actual : 142877, prog DutyCycle : 50, actual : 49.94
+PWM Channel : 7, prog Period (ms): 125.00, actual : 125057, prog DutyCycle : 55, actual : 54.94
+SimpleTimer (us): 2000, us : 42973223, Dus : 10437997
+PWM Channel : 0, prog Period (ms): 1000.00, actual : 1000015, prog DutyCycle : 5, actual : 5.00
+PWM Channel : 1, prog Period (ms): 500.00, actual : 500060, prog DutyCycle : 10, actual : 9.99
+PWM Channel : 2, prog Period (ms): 333.33, actual : 333346, prog DutyCycle : 20, actual : 19.97
+PWM Channel : 3, prog Period (ms): 250.00, actual : 249974, prog DutyCycle : 30, actual : 29.97
+PWM Channel : 4, prog Period (ms): 200.00, actual : 200042, prog DutyCycle : 40, actual : 39.98
+PWM Channel : 5, prog Period (ms): 166.67, actual : 166633, prog DutyCycle : 45, actual : 44.99
+PWM Channel : 6, prog Period (ms): 142.86, actual : 142872, prog DutyCycle : 50, actual : 49.98
+PWM Channel : 7, prog Period (ms): 125.00, actual : 125017, prog DutyCycle : 55, actual : 55.01
+```
 
 ---
 ---
@@ -1027,6 +1106,12 @@ Submit issues to: [megaAVR_Slow_PWM issues](https://github.com/khoih-prog/megaAV
 1. Basic hardware multi-channel PWM for **Arduino megaAVR boards, such as UNO WiFi Rev2, AVR_Nano_Every, etc.** using [`Arduino megaAVR core`](https://github.com/arduino/ArduinoCore-megaavr)
 2. Add Table of Contents
 3. Add functions to modify PWM settings on-the-fly
+4. Fix `multiple-definitions` linker error
+5. Optimize library code by using `reference-passing` instead of `value-passing`
+6. Add support to `MegaCoreX` core, including ATmega4809, ATmega4808, ATmega3209, ATmega3208, ATmega1609, ATmega1608, ATmega809 and ATmega808
+7. Improve accuracy by using `float`, instead of `uint32_t` for `dutycycle`
+8. DutyCycle to be optionally updated at the end current PWM period instead of immediately.
+
 
 ---
 ---

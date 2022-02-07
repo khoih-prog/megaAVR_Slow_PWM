@@ -13,10 +13,11 @@
   This important feature is absolutely necessary for mission-critical tasks.
 *****************************************************************************************************************************/
 
-#if ( defined(__AVR_ATmega4809__) || defined(ARDUINO_AVR_UNO_WIFI_REV2) || defined(ARDUINO_AVR_NANO_EVERY) )
-
-#else
-  #error This is designed only for Arduino megaAVR board! Please check your Tools->Board setting.
+#if !( defined(__AVR_ATmega4809__) || defined(ARDUINO_AVR_UNO_WIFI_REV2) || defined(ARDUINO_AVR_NANO_EVERY) || \
+      defined(ARDUINO_AVR_ATmega4809) || defined(ARDUINO_AVR_ATmega4808) || defined(ARDUINO_AVR_ATmega3209) || \
+      defined(ARDUINO_AVR_ATmega3208) || defined(ARDUINO_AVR_ATmega1609) || defined(ARDUINO_AVR_ATmega1608) || \
+      defined(ARDUINO_AVR_ATmega809) || defined(ARDUINO_AVR_ATmega808) )
+  #error This is designed only for Arduino or MegaCoreX megaAVR board! Please check your Tools->Board setting
 #endif
 
 // These define's must be placed at the beginning before #include "ESP32_PWM.h"
@@ -39,6 +40,7 @@
 
 #define USING_MICROS_RESOLUTION       true  //false 
 
+// To be included only in main(), .ino with setup() to avoid `Multiple Definitions` Linker Error
 #include "megaAVR_Slow_PWM.h"
 
 #define LED_OFF             HIGH
@@ -84,9 +86,9 @@ void TimerHandler()
 uint32_t PWM_Pin    = LED_BUILTIN;
 
 // You can assign any interval for any timer here, in Hz
-double PWM_Freq1   = 1.0f;
+float PWM_Freq1   = 1.0f;
 // You can assign any interval for any timer here, in Hz
-double PWM_Freq2   = 2.0f;
+float PWM_Freq2   = 2.0f;
 
 // You can assign any interval for any timer here, in microseconds
 uint32_t PWM_Period1 = 1000000 / PWM_Freq1;
@@ -94,9 +96,9 @@ uint32_t PWM_Period1 = 1000000 / PWM_Freq1;
 uint32_t PWM_Period2 = 1000000 / PWM_Freq2;
 
 // You can assign any duty_cycle for any PWM here, from 0-100
-uint32_t PWM_DutyCycle1  = 50;
+float PWM_DutyCycle1  = 50.0;
 // You can assign any duty_cycle for any PWM here, from 0-100
-uint32_t PWM_DutyCycle2  = 90;
+float PWM_DutyCycle2  = 90.0;
 
 // Channel number used to identify associated channel
 int channelNum;
