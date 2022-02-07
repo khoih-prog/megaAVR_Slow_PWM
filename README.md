@@ -47,7 +47,7 @@
   * [3. ISR_8_PWMs_Array_Simple on megaAVR Nano Every](#3-ISR_8_PWMs_Array_Simple-on-megaAVR-Nano-Every)
   * [4. ISR_Modify_PWM on megaAVR Nano Every](#4-ISR_Modify_PWM-on-megaAVR-Nano-Every)
   * [5. ISR_Changing_PWM on megaAVR Nano Every](#5-ISR_Changing_PWM-on-megaAVR-Nano-Every)
-  * [6. ISR_Changing_PWM on MegaCoreX Nano Every](#6-ISR_Changing_PWM-on-MegaCoreX-Nano-Every)
+  * [6. ISR_8_PWMs_Array_Complex on MegaCoreX Nano Every](#6-ISR_8_PWMs_Array_Complex-on-MegaCoreX-Nano-Every)
 * [Debug](#debug)
 * [Troubleshooting](#troubleshooting)
 * [Issues](#issues)
@@ -1108,7 +1108,7 @@ Submit issues to: [megaAVR_Slow_PWM issues](https://github.com/khoih-prog/megaAV
 3. Add functions to modify PWM settings on-the-fly
 4. Fix `multiple-definitions` linker error
 5. Optimize library code by using `reference-passing` instead of `value-passing`
-6. Add support to `MegaCoreX` core, including ATmega4809, ATmega4808, ATmega3209, ATmega3208, ATmega1609, ATmega1608, ATmega809 and ATmega808
+6. Add support to [`MegaCoreX megaAVR core`](https://github.com/MCUdude/MegaCoreX) core, including ATmega4809, ATmega4808, ATmega3209, ATmega3208, ATmega1609, ATmega1608, ATmega809 and ATmega808
 7. Improve accuracy by using `float`, instead of `uint32_t` for `dutycycle`
 8. DutyCycle to be optionally updated at the end current PWM period instead of immediately.
 
