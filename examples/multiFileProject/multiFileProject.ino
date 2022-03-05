@@ -17,8 +17,8 @@
   #error This is designed only for Arduino or MegaCoreX megaAVR board! Please check your Tools->Board setting
 #endif
 
-#define MEGA_AVR_SLOW_PWM_VERSION_MIN_TARGET      F("megaAVR_SLOW_PWM v1.2.0")
-#define MEGA_AVR_SLOW_PWM_VERSION_MIN             1002000
+#define MEGA_AVR_SLOW_PWM_VERSION_MIN_TARGET      F("megaAVR_SLOW_PWM v1.2.1")
+#define MEGA_AVR_SLOW_PWM_VERSION_MIN             1002001
 
 #include "multiFileProject.h"
 

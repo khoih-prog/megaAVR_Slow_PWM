@@ -20,7 +20,7 @@
   #error This is designed only for Arduino or MegaCoreX megaAVR board! Please check your Tools->Board setting
 #endif
 
-// These define's must be placed at the beginning before #include "ESP32_PWM.h"
+// These define's must be placed at the beginning before #include "megaAVR_Slow_PWM.h"
 // _PWM_LOGLEVEL_ from 0 to 4
 // Don't define _PWM_LOGLEVEL_ > 0. Only for special ISR debugging only. Can hang the system.
 #define _PWM_LOGLEVEL_      3
