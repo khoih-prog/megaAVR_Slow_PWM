@@ -459,10 +459,15 @@ TCB Clock Frequency = 16MHz for highest accuracy
 [PWM] Frequency =  30000.00 , CLK_TCB_FREQ =  16000000
 [PWM] setFrequency: _CCMPValueRemaining =  533
 Starting  ITimer1 OK, micros() = 2012696
-Using PWM Freq = 1.00, PWM DutyCycle = 50.00
-Channel : 0	    Period : 1000000		OnTime : 500000	Start_Time : 2018640
-Channel : 0	New Period : 500000		OnTime : 450000	Start_Time : 12019140
-Channel : 0	New Period : 1000000		OnTime : 500000	Start_Time : 22019624
+Using PWM Freq = 200.00, PWM DutyCycle = 1.00
+Channel : 0	    Period : 5000		OnTime : 50	Start_Time : 2018636
+Channel : 0	    Period : 10000		OnTime : 555	Start_Time : 12026148
+Channel : 0	    Period : 5000		OnTime : 50	Start_Time : 22018624
+Channel : 0	    Period : 10000		OnTime : 555	Start_Time : 32026252
+Channel : 0	    Period : 5000		OnTime : 50	Start_Time : 42023732
+Channel : 0	    Period : 10000		OnTime : 555	Start_Time : 52031224
+Channel : 0	    Period : 5000		OnTime : 50	Start_Time : 62023700
+Channel : 0	    Period : 10000		OnTime : 555	Start_Time : 72031192
 ```
 
 ---
@@ -472,7 +477,7 @@ Channel : 0	New Period : 1000000		OnTime : 500000	Start_Time : 22019624
 The following is the sample terminal output when running example [ISR_Changing_PWM](examples/ISR_Changing_PWM) on **megaAVR Nano Every** to demonstrate how to modify PWM settings on-the-fly by deleting the PWM channel and reinit the PWM channel
 
 ```
-Starting ISR_Modify_PWM on megaAVR Nano Every
+Starting ISR_Changing_PWM on megaAVR Nano Every
 megaAVR_SLOW_PWM v1.2.1
 CPU Frequency = 16 MHz
 TCB Clock Frequency = 16MHz for highest accuracy
@@ -486,16 +491,29 @@ TCB Clock Frequency = 16MHz for highest accuracy
 [PWM] ==================
 [PWM] Frequency =  30000.00 , CLK_TCB_FREQ =  16000000
 [PWM] setFrequency: _CCMPValueRemaining =  533
-Starting  ITimer1 OK, micros() = 2012696
-Using PWM Freq = 200.00, PWM DutyCycle = 1.00
-Channel : 0	    Period : 5000		OnTime : 50	Start_Time : 2018636
-Channel : 0	    Period : 10000		OnTime : 555	Start_Time : 12026148
-Channel : 0	    Period : 5000		OnTime : 50	Start_Time : 22018624
-Channel : 0	    Period : 10000		OnTime : 555	Start_Time : 32026252
-Channel : 0	    Period : 5000		OnTime : 50	Start_Time : 42023732
-Channel : 0	    Period : 10000		OnTime : 555	Start_Time : 52031224
-Channel : 0	    Period : 5000		OnTime : 50	Start_Time : 62023700
-Channel : 0	    Period : 10000		OnTime : 555	Start_Time : 72031192
+Starting  ITimer1 OK, micros() = 2012575
+Using PWM Freq = 1.00, PWM DutyCycle = 50.00
+Channel : 0	    Period : 1000000		OnTime : 500000	Start_Time : 2018587
+Using PWM Freq = 2.00, PWM DutyCycle = 90.00
+Channel : 0	    Period : 500000		OnTime : 450000	Start_Time : 12026819
+Using PWM Freq = 1.00, PWM DutyCycle = 50.00
+Channel : 0	    Period : 1000000		OnTime : 500000	Start_Time : 22033842
+Using PWM Freq = 2.00, PWM DutyCycle = 90.00
+Channel : 0	    Period : 500000		OnTime : 450000	Start_Time : 32041005
+Using PWM Freq = 1.00, PWM DutyCycle = 50.00
+Channel : 0	    Period : 1000000		OnTime : 500000	Start_Time : 42048026
+Using PWM Freq = 2.00, PWM DutyCycle = 90.00
+Channel : 0	    Period : 500000		OnTime : 450000	Start_Time : 52055177
+Using PWM Freq = 1.00, PWM DutyCycle = 50.00
+Channel : 0	    Period : 1000000		OnTime : 500000	Start_Time : 62062218
+Using PWM Freq = 2.00, PWM DutyCycle = 90.00
+Channel : 0	    Period : 500000		OnTime : 450000	Start_Time : 72069373
+Using PWM Freq = 1.00, PWM DutyCycle = 50.00
+Channel : 0	    Period : 1000000		OnTime : 500000	Start_Time : 82076404
+Using PWM Freq = 2.00, PWM DutyCycle = 90.00
+Channel : 0	    Period : 500000		OnTime : 450000	Start_Time : 92083560
+Using PWM Freq = 1.00, PWM DutyCycle = 50.00
+Channel : 0	    Period : 1000000		OnTime : 500000	Start_Time : 102090588
 ```
 
 ---
