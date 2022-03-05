@@ -6,7 +6,8 @@
 [![contributions welcome](https://img.shields.io/badge/contributions-welcome-brightgreen.svg?style=flat)](#Contributing)
 [![GitHub issues](https://img.shields.io/github/issues/khoih-prog/megaAVR_Slow_PWM.svg)](http://github.com/khoih-prog/megaAVR_Slow_PWM/issues)
 
-<a href="https://www.buymeacoffee.com/khoihprog6" target="_blank"><img src="https://cdn.buymeacoffee.com/buttons/v2/default-yellow.png" alt="Buy Me A Coffee" style="height: 60px !important;width: 217px !important;" ></a>
+<a href="https://www.buymeacoffee.com/khoihprog6" title="Donate to my libraries using BuyMeACoffee"><img src="https://cdn.buymeacoffee.com/buttons/v2/default-yellow.png" alt="Donate to my libraries using BuyMeACoffee" style="height: 50px !important;width: 181px !important;" ></a>
+<a href="https://www.buymeacoffee.com/khoihprog6" title="Donate to my libraries using BuyMeACoffee"><img src="https://img.shields.io/badge/buy%20me%20a%20coffee-donate-orange.svg?logo=buy-me-a-coffee&logoColor=FFDD00" style="height: 20px !important;width: 200px !important;" ></a>
 
 
 ---
@@ -128,7 +129,8 @@ The catch is **your function is now part of an ISR (Interrupt Service Routine), 
 
 ### Currently supported Boards
 
-1. **megaAVR-based boards** such as **UNO WiFi Rev2, AVR_Nano_Every, etc.**, etc., using [`Arduino megaAVR core`](https://github.com/arduino/ArduinoCore-megaavr)
+1. **megaAVR-based boards** such as **UNO WiFi Rev2, AVR_Nano_Every, etc.**, using [`Arduino megaAVR core`](https://github.com/arduino/ArduinoCore-megaavr)
+2. **megaAVR-based boards** such as **UNO WiFi Rev2, AVR_Nano_Every, ATmega4809, ATmega4808, ATmega3209, ATmega3208, ATmega1609, ATmega1608, ATmega809, ATmega808, etc.**, using [`MegaCoreX megaAVR core`](https://github.com/MCUdude/MegaCoreX)
 
 ---
 
@@ -173,7 +175,7 @@ Another way to install is to:
 
 1. Install [VS Code](https://code.visualstudio.com/)
 2. Install [PlatformIO](https://platformio.org/platformio-ide)
-3. Install [**megaAVR_Slow_PWM** library](https://platformio.org/lib/show/12886/megaAVR_Slow_PWM) by using [Library Manager](https://platformio.org/lib/show/12886/megaAVR_Slow_PWM/installation). Search for **megaAVR_Slow_PWM** in [Platform.io Author's Libraries](https://platformio.org/lib/search?query=author:%22Khoi%20Hoang%22)
+3. Install [**megaAVR_Slow_PWM** library](https://registry.platformio.org/libraries/khoih-prog/megaAVR_Slow_PWM) by using [Library Manager](https://registry.platformio.org/libraries/khoih-prog/megaAVR_Slow_PWM/installation). Search for **megaAVR_Slow_PWM** in [Platform.io Author's Libraries](https://platformio.org/lib/search?query=author:%22Khoi%20Hoang%22)
 4. Use included [platformio.ini](platformio/platformio.ini) file from examples to ensure that all dependent libraries will installed automatically. Please visit documentation for the other options and examples at [Project Configuration File](https://docs.platformio.org/page/projectconf.html)
 
 
@@ -287,509 +289,9 @@ void setup()
 
 ### Example [ISR_8_PWMs_Array_Complex](examples/ISR_8_PWMs_Array_Complex)
 
-```
-#if !( defined(__AVR_ATmega4809__) || defined(ARDUINO_AVR_UNO_WIFI_REV2) || defined(ARDUINO_AVR_NANO_EVERY) || \
-      defined(ARDUINO_AVR_ATmega4809) || defined(ARDUINO_AVR_ATmega4808) || defined(ARDUINO_AVR_ATmega3209) || \
-      defined(ARDUINO_AVR_ATmega3208) || defined(ARDUINO_AVR_ATmega1609) || defined(ARDUINO_AVR_ATmega1608) || \
-      defined(ARDUINO_AVR_ATmega809) || defined(ARDUINO_AVR_ATmega808) )
-  #error This is designed only for Arduino or MegaCoreX megaAVR board! Please check your Tools->Board setting
-#endif
+https://github.com/khoih-prog/megaAVR_Slow_PWM/blob/d719f9f1776e237b12c24c5853c88cd6f165d36f/examples/ISR_8_PWMs_Array_Complex/ISR_8_PWMs_Array_Complex.ino#L16-L516
 
-// These define's must be placed at the beginning before #include "ESP32_PWM.h"
-// _PWM_LOGLEVEL_ from 0 to 4
-// Don't define _PWM_LOGLEVEL_ > 0. Only for special ISR debugging only. Can hang the system.
-#define _PWM_LOGLEVEL_      3
 
-// Select USING_16MHZ     == true for  16MHz to Timer TCBx => shorter timer, but better accuracy
-// Select USING_8MHZ      == true for   8MHz to Timer TCBx => shorter timer, but better accuracy
-// Select USING_250KHZ    == true for 250KHz to Timer TCBx => shorter timer, but better accuracy
-// Not select for default 250KHz to Timer TCBx => longer timer,  but worse accuracy
-#define USING_16MHZ     true
-#define USING_8MHZ      false
-#define USING_250KHZ    false
-
-#define USE_TIMER_0     false
-#define USE_TIMER_1     true
-#define USE_TIMER_2     false
-#define USE_TIMER_3     false
-
-#define USING_MICROS_RESOLUTION       true  //false 
-
-// To be included only in main(), .ino with setup() to avoid `Multiple Definitions` Linker Error
-#include "megaAVR_Slow_PWM.h"
-
-#include <SimpleTimer.h>              // https://github.com/jfturcot/SimpleTimer
-
-#define LED_OFF             HIGH
-#define LED_ON              LOW
-
-#ifndef LED_BUILTIN
-  #define LED_BUILTIN       13
-#endif
-
-#ifndef LED_BLUE
-  #define LED_BLUE          10
-#endif
-
-#ifndef LED_RED
-  #define LED_RED           11
-#endif
-
-#define USING_HW_TIMER_INTERVAL_MS        false   //true
-
-// Don't change these numbers to make higher Timer freq. System can hang
-#define HW_TIMER_INTERVAL_MS        0.0333f
-#define HW_TIMER_INTERVAL_FREQ      30000L
-
-volatile uint32_t startMicros = 0;
-
-// Init megaAVR_SLOW_PWM, each can service 16 different ISR-based PWM channels
-megaAVR_SLOW_PWM ISR_PWM;
-
-//////////////////////////////////////////////////////
-
-void TimerHandler()
-{
-  ISR_PWM.run();
-}
-
-/////////////////////////////////////////////////
-
-#define PIN_D0      0
-#define PIN_D1      1
-#define PIN_D2      2
-#define PIN_D3      3
-#define PIN_D4      4
-#define PIN_D5      5
-#define PIN_D6      6
-
-// You can assign pins here. Be careful to select good pin to use or crash, e.g pin 6-11
-uint32_t PWM_Pin[] =
-{
-  LED_BUILTIN, PIN_D0, PIN_D1,  PIN_D2,  PIN_D3,  PIN_D4,  PIN_D5,  PIN_D6
-};
-
-#define NUMBER_ISR_PWMS         ( sizeof(PWM_Pin) / sizeof(uint32_t) )
-
-typedef void (*irqCallback)  ();
-
-//////////////////////////////////////////////////////
-
-#define USE_COMPLEX_STRUCT      true
-
-//////////////////////////////////////////////////////
-
-#if USE_COMPLEX_STRUCT
-
-typedef struct
-{
-  uint32_t      PWM_Pin;
-  irqCallback   irqCallbackStartFunc;
-  irqCallback   irqCallbackStopFunc;
-
-  uint32_t      PWM_Freq;
-
-  uint32_t      PWM_DutyCycle;
-
-  uint32_t      deltaMicrosStart;
-  uint32_t      previousMicrosStart;
-
-  uint32_t      deltaMicrosStop;
-  uint32_t      previousMicrosStop;
-
-} ISR_PWM_Data;
-
-// In nRF52, avoid doing something fancy in ISR, for example Serial.print()
-// The pure simple Serial.prints here are just for demonstration and testing. Must be eliminate in working environment
-// Or you can get this run-time error / crash
-
-void doingSomethingStart(int index);
-
-void doingSomethingStop(int index);
-
-#else   // #if USE_COMPLEX_STRUCT
-
-volatile unsigned long deltaMicrosStart    [] = { 0, 0, 0, 0, 0, 0, 0, 0 };
-volatile unsigned long previousMicrosStart [] = { 0, 0, 0, 0, 0, 0, 0, 0 };
-
-volatile unsigned long deltaMicrosStop     [] = { 0, 0, 0, 0, 0, 0, 0, 0 };
-volatile unsigned long previousMicrosStop  [] = { 0, 0, 0, 0, 0, 0, 0, 0 };
-
-
-// You can assign any interval for any timer here, in Microseconds
-uint32_t PWM_Period[] =
-{
-  1000L,   500L,   333L,   250L,   200L,   166L,   142L,   125L
-};
-
-// You can assign any interval for any timer here, in Hz
-float PWM_Freq[] =
-{
-  1.0f,  2.0f,  3.0f,  4.0f,  5.0f,  6.0f,  7.0f,  8.0f,
-};
-
-// You can assign any interval for any timer here, in Microseconds
-float PWM_DutyCycle[] =
-{
-  5.0, 10.0, 20.0, 30.0, 40.0, 45.0, 50.0, 55.0
-};
-
-void doingSomethingStart(int index)
-{
-  unsigned long currentMicros  = micros();
-
-  deltaMicrosStart[index]    = currentMicros - previousMicrosStart[index];
-  previousMicrosStart[index] = currentMicros;
-}
-
-void doingSomethingStop(int index)
-{
-  unsigned long currentMicros  = micros();
-
-  // Count from start to stop PWM pulse
-  deltaMicrosStop[index]    = currentMicros - previousMicrosStart[index];
-  previousMicrosStop[index] = currentMicros;
-}
-
-#endif    // #if USE_COMPLEX_STRUCT
-
-////////////////////////////////////
-// Shared
-////////////////////////////////////
-
-void doingSomethingStart0()
-{
-  doingSomethingStart(0);
-}
-
-void doingSomethingStart1()
-{
-  doingSomethingStart(1);
-}
-
-void doingSomethingStart2()
-{
-  doingSomethingStart(2);
-}
-
-void doingSomethingStart3()
-{
-  doingSomethingStart(3);
-}
-
-void doingSomethingStart4()
-{
-  doingSomethingStart(4);
-}
-
-void doingSomethingStart5()
-{
-  doingSomethingStart(5);
-}
-
-void doingSomethingStart6()
-{
-  doingSomethingStart(6);
-}
-
-void doingSomethingStart7()
-{
-  doingSomethingStart(7);
-}
-
-
-//////////////////////////////////////////////////////
-
-void doingSomethingStop0()
-{
-  doingSomethingStop(0);
-}
-
-void doingSomethingStop1()
-{
-  doingSomethingStop(1);
-}
-
-void doingSomethingStop2()
-{
-  doingSomethingStop(2);
-}
-
-void doingSomethingStop3()
-{
-  doingSomethingStop(3);
-}
-
-void doingSomethingStop4()
-{
-  doingSomethingStop(4);
-}
-
-void doingSomethingStop5()
-{
-  doingSomethingStop(5);
-}
-
-void doingSomethingStop6()
-{
-  doingSomethingStop(6);
-}
-
-void doingSomethingStop7()
-{
-  doingSomethingStop(7);
-}
-
-
-//////////////////////////////////////////////////////
-
-#if USE_COMPLEX_STRUCT
-
-ISR_PWM_Data curISR_PWM_Data[] =
-{
-  // pin, irqCallbackStartFunc, irqCallbackStopFunc, PWM_Freq, PWM_DutyCycle, deltaMicrosStart, previousMicrosStart, deltaMicrosStop, previousMicrosStop
-  { LED_BUILTIN,  doingSomethingStart0,    doingSomethingStop0,    1,   5, 0, 0, 0, 0 },
-  { PIN_D0,       doingSomethingStart1,    doingSomethingStop1,    2,  10, 0, 0, 0, 0 },
-  { PIN_D1,       doingSomethingStart2,    doingSomethingStop2,    3,  20, 0, 0, 0, 0 },
-  { PIN_D2,       doingSomethingStart3,    doingSomethingStop3,    4,  30, 0, 0, 0, 0 },
-  { PIN_D3,       doingSomethingStart4,    doingSomethingStop4,    5,  40, 0, 0, 0, 0 },
-  { PIN_D4,       doingSomethingStart5,    doingSomethingStop5,    6,  45, 0, 0, 0, 0 },
-  { PIN_D5,       doingSomethingStart6,    doingSomethingStop6,    7,  50, 0, 0, 0, 0 },
-  { PIN_D6,       doingSomethingStart7,    doingSomethingStop7,    8,  55, 0, 0, 0, 0 },
-};
-
-
-void doingSomethingStart(int index)
-{
-  unsigned long currentMicros  = micros();
-
-  curISR_PWM_Data[index].deltaMicrosStart    = currentMicros - curISR_PWM_Data[index].previousMicrosStart;
-  curISR_PWM_Data[index].previousMicrosStart = currentMicros;
-}
-
-void doingSomethingStop(int index)
-{
-  unsigned long currentMicros  = micros();
-
-  //curISR_PWM_Data[index].deltaMicrosStop     = currentMicros - curISR_PWM_Data[index].previousMicrosStop;
-  // Count from start to stop PWM pulse
-  curISR_PWM_Data[index].deltaMicrosStop     = currentMicros - curISR_PWM_Data[index].previousMicrosStart;
-  curISR_PWM_Data[index].previousMicrosStop  = currentMicros;
-}
-
-#else   // #if USE_COMPLEX_STRUCT
-
-irqCallback irqCallbackStartFunc[] =
-{
-  doingSomethingStart0,  doingSomethingStart1,  doingSomethingStart2,  doingSomethingStart3,
-  doingSomethingStart4,  doingSomethingStart5,  doingSomethingStart6,  doingSomethingStart7
-};
-
-irqCallback irqCallbackStopFunc[] =
-{
-  doingSomethingStop0,  doingSomethingStop1,  doingSomethingStop2,  doingSomethingStop3,
-  doingSomethingStop4,  doingSomethingStop5,  doingSomethingStop6,  doingSomethingStop7
-};
-
-#endif    // #if USE_COMPLEX_STRUCT
-
-//////////////////////////////////////////////////////
-
-#define SIMPLE_TIMER_MS        2000L
-
-// Init SimpleTimer
-SimpleTimer simpleTimer;
-
-// Here is software Timer, you can do somewhat fancy stuffs without many issues.
-// But always avoid
-// 1. Long delay() it just doing nothing and pain-without-gain wasting CPU power.Plan and design your code / strategy ahead
-// 2. Very long "do", "while", "for" loops without predetermined exit time.
-void simpleTimerDoingSomething2s()
-{
-  static unsigned long previousMicrosStart = startMicros;
-
-  unsigned long currMicros = micros();
-
-  Serial.print(F("SimpleTimer (us): ")); Serial.print(SIMPLE_TIMER_MS);
-  Serial.print(F(", us : ")); Serial.print(currMicros);
-  Serial.print(F(", Dus : ")); Serial.println(currMicros - previousMicrosStart);
-
-  for (uint16_t i = 0; i < NUMBER_ISR_PWMS; i++)
-  {
-#if USE_COMPLEX_STRUCT
-    Serial.print(F("PWM Channel : ")); Serial.print(i);
-    Serial.print(F(", prog Period (ms): "));
-
-    Serial.print(1000.f / curISR_PWM_Data[i].PWM_Freq);
-
-    Serial.print(F(", actual : ")); Serial.print((uint32_t) curISR_PWM_Data[i].deltaMicrosStart);
-
-    Serial.print(F(", prog DutyCycle : "));
-
-    Serial.print(curISR_PWM_Data[i].PWM_DutyCycle);
-
-    Serial.print(F(", actual : ")); Serial.println((float) curISR_PWM_Data[i].deltaMicrosStop * 100.0f / curISR_PWM_Data[i].deltaMicrosStart);
-    //Serial.print(F(", actual deltaMicrosStop : ")); Serial.println(curISR_PWM_Data[i].deltaMicrosStop);
-    //Serial.print(F(", actual deltaMicrosStart : ")); Serial.println(curISR_PWM_Data[i].deltaMicrosStart);
-
-#else
-
-    Serial.print(F("PWM Channel : ")); Serial.print(i);
-
-    Serial.print(1000 / PWM_Freq[i]);
-
-    Serial.print(F(", prog. Period (us): ")); Serial.print(PWM_Period[i]);
-    Serial.print(F(", actual : ")); Serial.print(deltaMicrosStart[i]);
-
-    Serial.print(F(", prog DutyCycle : "));
-
-    Serial.print(PWM_DutyCycle[i]);
-
-    Serial.print(F(", actual : ")); Serial.println( (float) deltaMicrosStop[i] * 100.0f / deltaMicrosStart[i]);
-    //Serial.print(F(", actual deltaMicrosStop : ")); Serial.println(deltaMicrosStop[i]);
-    //Serial.print(F(", actual deltaMicrosStart : ")); Serial.println(deltaMicrosStart[i]);
-#endif
-  }
-
-  previousMicrosStart = currMicros;
-}
-
-void setup()
-{
-  Serial.begin(115200);
-  while (!Serial);
-
-  delay(2000);
-
-  Serial.print(F("\nStarting ISR_8_PWMs_Array_Complex on ")); Serial.println(BOARD_NAME);
-  Serial.println(MEGA_AVR_SLOW_PWM_VERSION);
-  Serial.print(F("CPU Frequency = ")); Serial.print(F_CPU / 1000000); Serial.println(F(" MHz"));
-
-  Serial.print(F("TCB Clock Frequency = ")); 
-
-#if USING_16MHZ  
-  Serial.println(F("16MHz for highest accuracy"));
-#elif USING_8MHZ  
-  Serial.println(F("8MHz for very high accuracy"));
-#else
-  Serial.println(F("250KHz for lower accuracy but longer time"));
-#endif
-
-#if USING_HW_TIMER_INTERVAL_MS
-
-#if USE_TIMER_1
-
-  ITimer1.init();
-
-  // Using ATmega328 used in UNO => 16MHz CPU clock ,
-
-  if (ITimer1.attachInterruptInterval(HW_TIMER_INTERVAL_MS, TimerHandler))
-  {
-    Serial.print(F("Starting  ITimer1 OK, micros() = ")); Serial.println(micros());
-  }
-  else
-    Serial.println(F("Can't set ITimer1. Select another freq. or timer"));
-    
-#elif USE_TIMER_3
-
-  ITimer3.init();
-
-  if (ITimer3.attachInterruptInterval(HW_TIMER_INTERVAL_MS, TimerHandler))
-  {
-    Serial.print(F("Starting  ITimer3 OK, micros() = ")); Serial.println(micros());
-  }
-  else
-    Serial.println(F("Can't set ITimer3. Select another freq. or timer"));
-
-#endif
-
-#else
-
-#if USE_TIMER_1
-
-  ITimer1.init();
-
-  // Using ATmega328 used in UNO => 16MHz CPU clock ,
-
-  if (ITimer1.attachInterrupt(HW_TIMER_INTERVAL_FREQ, TimerHandler))
-  {
-    Serial.print(F("Starting  ITimer1 OK, micros() = ")); Serial.println(micros());
-  }
-  else
-    Serial.println(F("Can't set ITimer1. Select another freq. or timer"));
-
-#elif USE_TIMER_2
-
-  ITimer2.init();
-
-  if (ITimer2.attachInterrupt(HW_TIMER_INTERVAL_FREQ, TimerHandler))
-  {
-    Serial.print(F("Starting  ITimer2 OK, micros() = ")); Serial.println(micros());
-  }
-  else
-    Serial.println(F("Can't set ITimer2. Select another freq. or timer"));
-    
-#elif USE_TIMER_3
-
-  ITimer3.init();
-
-  if (ITimer3.attachInterrupt(HW_TIMER_INTERVAL_FREQ, TimerHandler))
-  {
-    Serial.print(F("Starting  ITimer3 OK, micros() = ")); Serial.println(micros());
-  }
-  else
-    Serial.println(F("Can't set ITimer3. Select another freq. or timer"));
-
-#endif    // USE_TIMER_1
-
-#endif    // USING_HW_TIMER_INTERVAL_MS
-
-  startMicros = micros();
-
-  // Just to demonstrate, don't use too many ISR Timers if not absolutely necessary
-  // You can use up to 16 timer for each ISR_PWM
-
-  for (uint16_t i = 0; i < NUMBER_ISR_PWMS; i++)
-  {
-#if USE_COMPLEX_STRUCT
-    curISR_PWM_Data[i].previousMicrosStart = startMicros;
-    //ISR_PWM.setInterval(curISR_PWM_Data[i].PWM_Period, curISR_PWM_Data[i].irqCallbackStartFunc);
-
-    //void setPWM(uint32_t pin, float frequency, float dutycycle
-    // , timer_callback_p StartCallback = nullptr, timer_callback_p StopCallback = nullptr)
-
-    // You can use this with PWM_Freq in Hz
-    ISR_PWM.setPWM(curISR_PWM_Data[i].PWM_Pin, curISR_PWM_Data[i].PWM_Freq, curISR_PWM_Data[i].PWM_DutyCycle,
-                   curISR_PWM_Data[i].irqCallbackStartFunc, curISR_PWM_Data[i].irqCallbackStopFunc);
-
-#else
-    previousMicrosStart[i] = micros();
-
-    // You can use this with PWM_Freq in Hz
-    ISR_PWM.setPWM(PWM_Pin[i], PWM_Freq[i], PWM_DutyCycle[i], irqCallbackStartFunc[i], irqCallbackStopFunc[i]);
-
-#endif
-  }
-
-  // You need this timer for non-critical tasks. Avoid abusing ISR if not absolutely necessary.
-  simpleTimer.setInterval(SIMPLE_TIMER_MS, simpleTimerDoingSomething2s);
-}
-
-#define BLOCKING_TIME_MS      10000L
-
-void loop()
-{
-  // This unadvised blocking task is used to demonstrate the blocking effects onto the execution and accuracy to Software timer
-  // You see the time elapse of ISR_PWM still accurate, whereas very unaccurate for Software Timer
-  // The time elapse for 2000ms software timer now becomes 3000ms (BLOCKING_TIME_MS)
-  // While that of ISR_PWM is still prefect.
-  delay(BLOCKING_TIME_MS);
-
-  // You need this Software timer for non-critical tasks. Avoid abusing ISR if not absolutely necessary
-  // You don't need to and never call ISR_PWM.run() here in the loop(). It's already handled by ISR timer.
-  simpleTimer.run();
-}
-```
 ---
 ---
 
@@ -802,7 +304,7 @@ The following is the sample terminal output when running example [ISR_8_PWMs_Arr
 
 ```
 Starting ISR_8_PWMs_Array_Complex on megaAVR Nano Every
-megaAVR_SLOW_PWM v1.2.0
+megaAVR_SLOW_PWM v1.2.1
 CPU Frequency = 16 MHz
 TCB Clock Frequency = 16MHz for highest accuracy
 [PWM] TCB 1
@@ -879,7 +381,7 @@ The following is the sample terminal output when running example [**ISR_8_PWMs_A
 
 ```
 Starting ISR_8_PWMs_Array on megaAVR Nano Every
-megaAVR_SLOW_PWM v1.2.0
+megaAVR_SLOW_PWM v1.2.1
 CPU Frequency = 16 MHz
 TCB Clock Frequency = 16MHz for highest accuracy
 [PWM] TCB 1
@@ -911,7 +413,7 @@ The following is the sample terminal output when running example [**ISR_8_PWMs_A
 
 ```
 Starting ISR_8_PWMs_Array_Simple on megaAVR Nano Every
-megaAVR_SLOW_PWM v1.2.0
+megaAVR_SLOW_PWM v1.2.1
 CPU Frequency = 16 MHz
 TCB Clock Frequency = 16MHz for highest accuracy
 [PWM] TCB 1
@@ -943,7 +445,7 @@ The following is the sample terminal output when running example [ISR_Modify_PWM
 
 ```
 Starting ISR_Modify_PWM on megaAVR Nano Every
-megaAVR_SLOW_PWM v1.2.0
+megaAVR_SLOW_PWM v1.2.1
 CPU Frequency = 16 MHz
 TCB Clock Frequency = 16MHz for highest accuracy
 [PWM] TCB 1
@@ -970,8 +472,8 @@ Channel : 0	New Period : 1000000		OnTime : 500000	Start_Time : 22019624
 The following is the sample terminal output when running example [ISR_Changing_PWM](examples/ISR_Changing_PWM) on **megaAVR Nano Every** to demonstrate how to modify PWM settings on-the-fly by deleting the PWM channel and reinit the PWM channel
 
 ```
-Starting ISR_Changing_PWM on megaAVR Nano Every
-megaAVR_SLOW_PWM v1.2.0
+Starting ISR_Modify_PWM on megaAVR Nano Every
+megaAVR_SLOW_PWM v1.2.1
 CPU Frequency = 16 MHz
 TCB Clock Frequency = 16MHz for highest accuracy
 [PWM] TCB 1
@@ -984,13 +486,16 @@ TCB Clock Frequency = 16MHz for highest accuracy
 [PWM] ==================
 [PWM] Frequency =  30000.00 , CLK_TCB_FREQ =  16000000
 [PWM] setFrequency: _CCMPValueRemaining =  533
-Starting  ITimer1 OK, micros() = 2012872
-Using PWM Freq = 1.00, PWM DutyCycle = 50.00
-Channel : 0	    Period : 1000000		OnTime : 500000	Start_Time : 2018824
-Using PWM Freq = 2.00, PWM DutyCycle = 90.00
-Channel : 0	    Period : 500000		OnTime : 450000	Start_Time : 12026916
-Using PWM Freq = 1.00, PWM DutyCycle = 50.00
-Channel : 0	    Period : 1000000		OnTime : 500000	Start_Time : 22033944
+Starting  ITimer1 OK, micros() = 2012696
+Using PWM Freq = 200.00, PWM DutyCycle = 1.00
+Channel : 0	    Period : 5000		OnTime : 50	Start_Time : 2018636
+Channel : 0	    Period : 10000		OnTime : 555	Start_Time : 12026148
+Channel : 0	    Period : 5000		OnTime : 50	Start_Time : 22018624
+Channel : 0	    Period : 10000		OnTime : 555	Start_Time : 32026252
+Channel : 0	    Period : 5000		OnTime : 50	Start_Time : 42023732
+Channel : 0	    Period : 10000		OnTime : 555	Start_Time : 52031224
+Channel : 0	    Period : 5000		OnTime : 50	Start_Time : 62023700
+Channel : 0	    Period : 10000		OnTime : 555	Start_Time : 72031192
 ```
 
 ---
@@ -1002,7 +507,7 @@ The following is the sample terminal output when running example [ISR_8_PWMs_Arr
 
 ```
 Starting ISR_8_PWMs_Array_Complex on MegaCoreX Nano Every
-megaAVR_SLOW_PWM v1.2.0
+megaAVR_SLOW_PWM v1.2.1
 CPU Frequency = 16 MHz
 TCB Clock Frequency = 16MHz for highest accuracy
 [PWM] TCB 1
@@ -1111,7 +616,7 @@ Submit issues to: [megaAVR_Slow_PWM issues](https://github.com/khoih-prog/megaAV
 6. Add support to [`MegaCoreX megaAVR core`](https://github.com/MCUdude/MegaCoreX) core, including ATmega4809, ATmega4808, ATmega3209, ATmega3208, ATmega1609, ATmega1608, ATmega809 and ATmega808
 7. Improve accuracy by using `float`, instead of `uint32_t` for `dutycycle`
 8. DutyCycle to be optionally updated at the end current PWM period instead of immediately.
-
+9. Display informational warning only when `_PWM_LOGLEVEL_` > 3
 
 ---
 ---
