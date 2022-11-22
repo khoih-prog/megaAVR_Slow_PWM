@@ -6,8 +6,12 @@
 [![contributions welcome](https://img.shields.io/badge/contributions-welcome-brightgreen.svg?style=flat)](#Contributing)
 [![GitHub issues](https://img.shields.io/github/issues/khoih-prog/megaAVR_Slow_PWM.svg)](http://github.com/khoih-prog/megaAVR_Slow_PWM/issues)
 
+
 <a href="https://www.buymeacoffee.com/khoihprog6" title="Donate to my libraries using BuyMeACoffee"><img src="https://cdn.buymeacoffee.com/buttons/v2/default-yellow.png" alt="Donate to my libraries using BuyMeACoffee" style="height: 50px !important;width: 181px !important;" ></a>
 <a href="https://www.buymeacoffee.com/khoihprog6" title="Donate to my libraries using BuyMeACoffee"><img src="https://img.shields.io/badge/buy%20me%20a%20coffee-donate-orange.svg?logo=buy-me-a-coffee&logoColor=FFDD00" style="height: 20px !important;width: 200px !important;" ></a>
+<a href="https://profile-counter.glitch.me/khoih-prog/count.svg" title="Total khoih-prog Visitor count"><img src="https://profile-counter.glitch.me/khoih-prog/count.svg" style="height: 30px;width: 200px;"></a>
+<a href="https://profile-counter.glitch.me/khoih-prog-megaAVR_Slow_PWM/count.svg" title="megaAVR_Slow_PWM Visitor count"><img src="https://profile-counter.glitch.me/khoih-prog-megaAVR_Slow_PWM/count.svg" style="height: 30px;width: 200px;"></a>
+
 
 
 ---
@@ -71,7 +75,7 @@ As more complex calculation and check **inside ISR** are introduced from v1.2.0,
 You can modify to use larger `HW_TIMER_INTERVAL_US`, (from current 33.3uS), according to your board and use-case if crash happens.
 
 
-```
+```cpp
 // Don't change these numbers to make higher Timer freq. System can hang
 #define HW_TIMER_INTERVAL_MS        0.0333f
 #define HW_TIMER_INTERVAL_FREQ      30000L
@@ -146,8 +150,8 @@ The catch is **your function is now part of an ISR (Interrupt Service Routine), 
 ## Prerequisites
 
 1. [`Arduino IDE 1.8.19+` for Arduino](https://github.com/arduino/Arduino). [![GitHub release](https://img.shields.io/github/release/arduino/Arduino.svg)](https://github.com/arduino/Arduino/releases/latest)
-2. [`Arduino megaAVR core 1.8.7+`](https://github.com/arduino/ArduinoCore-megaavr/releases) for Arduino megaAVR boards. Use Arduino Board Manager to install.
-3. [`MegaCoreX megaAVR core 1.0.9+`](https://github.com/MCUdude/MegaCoreX/releases) for Arduino megaAVR boards.  [![GitHub release](https://img.shields.io/github/release/MCUdude/MegaCoreX.svg)](https://github.com/MCUdude/MegaCoreX/releases/latest). Follow [**How to install**](https://github.com/MCUdude/MegaCoreX#how-to-install).
+2. [`Arduino megaAVR core 1.8.7+`](https://github.com/arduino/ArduinoCore-megaavr/releases) for Arduino megaAVR boards. Use Arduino Board Manager to install. [![GitHub release](https://img.shields.io/github/release/arduino/ArduinoCore-megaavr.svg)](https://github.com/arduino/ArduinoCore-megaavr/releases/latest).
+3. [`MegaCoreX megaAVR core 1.1.0+`](https://github.com/MCUdude/MegaCoreX/releases) for Arduino megaAVR boards.  [![GitHub release](https://img.shields.io/github/release/MCUdude/MegaCoreX.svg)](https://github.com/MCUdude/MegaCoreX/releases/latest). Follow [**How to install**](https://github.com/MCUdude/MegaCoreX#how-to-install).
 4. To use with certain example
    - [`SimpleTimer library`](https://github.com/jfturcot/SimpleTimer) for [ISR_Timers_Array_Simple](examples/ISR_Timers_Array_Simple) and [ISR_16_Timers_Array_Complex](examples/ISR_16_Timers_Array_Complex) examples.
    
@@ -188,14 +192,14 @@ The current library implementation, using `xyz-Impl.h` instead of standard `xyz.
 
 You can include this `.hpp` file
 
-```
+```cpp
 // Can be included as many times as necessary, without `Multiple Definitions` Linker Error
 #include "megaAVR_Slow_PWM.hpp"     //https://github.com/khoih-prog/megaAVR_Slow_PWM
 ```
 
 in many files. But be sure to use the following `.h` file **in just 1 `.h`, `.cpp` or `.ino` file**, which must **not be included in any other file**, to avoid `Multiple Definitions` Linker Error
 
-```
+```cpp
 // To be included only in main(), .ino with setup() to avoid `Multiple Definitions` Linker Error
 #include "megaAVR_Slow_PWM.h"           //https://github.com/khoih-prog/megaAVR_Slow_PWM
 ```
@@ -229,7 +233,7 @@ Before using any Timer, you have to make sure the Timer has not been used by any
 
 #### 1. Init Hardware Timer
 
-```
+```cpp
 // Select USING_16MHZ     == true for  16MHz to Timer TCBx => shorter timer, but better accuracy
 // Select USING_8MHZ      == true for   8MHz to Timer TCBx => shorter timer, but better accuracy
 // Select USING_250KHZ    == true for 250KHz to Timer TCBx => shorter timer, but better accuracy
@@ -249,7 +253,7 @@ megaAVR_SLOW_PWM ISR_PWM;
 
 #### 2. Set PWM Frequency, dutycycle, attach irqCallbackStartFunc and irqCallbackStopFunc functions
 
-```
+```cpp
 void irqCallbackStartFunc()
 {
 
@@ -302,7 +306,7 @@ https://github.com/khoih-prog/megaAVR_Slow_PWM/blob/d719f9f1776e237b12c24c5853c8
 The following is the sample terminal output when running example [ISR_8_PWMs_Array_Complex](examples/ISR_8_PWMs_Array_Complex) **megaAVR Nano Every** to demonstrate how to use multiple PWM channels with complex callback functions, the accuracy of ISR Hardware PWM-channels, **especially when system is very busy**.  The ISR PWM-channels is **running exactly according to corresponding programmed periods and duty-cycles**
 
 
-```
+```cpp
 Starting ISR_8_PWMs_Array_Complex on megaAVR Nano Every
 megaAVR_SLOW_PWM v1.2.1
 CPU Frequency = 16 MHz
@@ -379,7 +383,7 @@ PWM Channel : 7, prog Period (ms): 125.00, actual : 124988, prog DutyCycle : 55,
 
 The following is the sample terminal output when running example [**ISR_8_PWMs_Array**](examples/ISR_8_PWMs_Array) on **megaAVR Nano Every** to demonstrate how to use multiple PWM channels with simple callback functions.
 
-```
+```cpp
 Starting ISR_8_PWMs_Array on megaAVR Nano Every
 megaAVR_SLOW_PWM v1.2.1
 CPU Frequency = 16 MHz
@@ -411,7 +415,7 @@ Channel : 7	    Period : 125000		OnTime : 68750	Start_Time : 2064600
 
 The following is the sample terminal output when running example [**ISR_8_PWMs_Array_Simple**](examples/ISR_8_PWMs_Array_Simple) on **megaAVR Nano Every** to demonstrate how to use multiple PWM channels.
 
-```
+```cpp
 Starting ISR_8_PWMs_Array_Simple on megaAVR Nano Every
 megaAVR_SLOW_PWM v1.2.1
 CPU Frequency = 16 MHz
@@ -443,7 +447,7 @@ Channel : 7	    Period : 125000		OnTime : 68750	Start_Time : 2064172
 
 The following is the sample terminal output when running example [ISR_Modify_PWM](examples/ISR_Modify_PWM) on **megaAVR Nano Every** to demonstrate how to modify PWM settings on-the-fly without deleting the PWM channel
 
-```
+```cpp
 Starting ISR_Modify_PWM on megaAVR Nano Every
 megaAVR_SLOW_PWM v1.2.1
 CPU Frequency = 16 MHz
@@ -476,7 +480,7 @@ Channel : 0	    Period : 10000		OnTime : 555	Start_Time : 72031192
 
 The following is the sample terminal output when running example [ISR_Changing_PWM](examples/ISR_Changing_PWM) on **megaAVR Nano Every** to demonstrate how to modify PWM settings on-the-fly by deleting the PWM channel and reinit the PWM channel
 
-```
+```cpp
 Starting ISR_Changing_PWM on megaAVR Nano Every
 megaAVR_SLOW_PWM v1.2.1
 CPU Frequency = 16 MHz
@@ -523,7 +527,7 @@ Channel : 0	    Period : 1000000		OnTime : 500000	Start_Time : 102090588
 The following is the sample terminal output when running example [ISR_8_PWMs_Array_Complex](examples/ISR_8_PWMs_Array_Complex) **MegaCoreX Nano Every** to demonstrate how to use multiple PWM channels with complex callback functions, the accuracy of ISR Hardware PWM-channels, **especially when system is very busy**.  The ISR PWM-channels is **running exactly according to corresponding programmed periods and duty-cycles**
 
 
-```
+```cpp
 Starting ISR_8_PWMs_Array_Complex on MegaCoreX Nano Every
 megaAVR_SLOW_PWM v1.2.1
 CPU Frequency = 16 MHz
@@ -664,6 +668,6 @@ If you want to contribute to this project:
 
 ## Copyright
 
-Copyright 2021- Khoi Hoang
+Copyright (c) 2021- Khoi Hoang
 
 
